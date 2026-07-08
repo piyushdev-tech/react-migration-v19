@@ -98,8 +98,12 @@ Run the official codemods before any manual edits, on the branch from Phase 0 (r
 — they commit as they go):
 
 ```bash
-npx codemod react/19/migration-recipe          # ReactDOM.render, string refs, act imports, useFormState
-npx types-react-codemod@latest preset-19 ./src # TS-specific type migrations
+# Package is "react-19-migration-recipe" (verify with `npx codemod search react` — the
+# registry and CLI syntax have changed before). --no-interactive is required outside a TTY.
+npx codemod run react-19-migration-recipe --target ./src --no-interactive
+
+# --yes auto-accepts all transforms in the picker; required outside a TTY.
+npx types-react-codemod@latest preset-19 ./src --yes
 ```
 
 Individual codemods exist if only one change is needed — see

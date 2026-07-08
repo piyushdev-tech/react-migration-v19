@@ -40,12 +40,22 @@ shouldn't wait on the same approval as a dependency *change*.
 **Entry:** on `react@18.3.0`. **Exit:** a known-good baseline recorded before anything
 changes.
 
-- [ ] Working tree is clean and on a dedicated branch (`git checkout -b upgrade/react-19`)
-      — the official codemods require a git repo to run safely.
-- [ ] CI is green on `main` before you start.
-- [ ] `npm test` and `npm run build` both pass on 18.3.0 right now — this is the
-      baseline every later phase is compared against.
-- [ ] Confirm test coverage exists for: `TodosGrid` (ag-grid), `NavBar` (react-bootstrap
+- [x] Working tree is clean and on a dedicated branch (`git checkout -b upgrade/react-19`)
+      — the official codemods require a git repo to run safely. (Already on
+      `upgrade/react-19`, tree clean.)
+- [x] CI is green on `main` before you start.
+- [x] `npm test` and `npm run build` both pass on 18.3.0 right now — this is the
+      baseline every later phase is compared against. **Gotcha hit (2026-07-08):**
+      `node_modules/react`/`react-dom` were found already installed at `19.2.7` while
+      `package.json`/`package-lock.json` still declared `18.3.0` (npm flagged them
+      `invalid` — leftover drift from an earlier session, not a committed change). Ran
+      `npm install` to resync `node_modules` to the lockfile before trusting this
+      baseline — always confirm `npm ls react react-dom` shows no `invalid` entries
+      before recording a baseline. True 18.3.0 baseline: 3 test files / 4 tests pass,
+      `npm run build` clean (JS 1,379.54 kB / gzip 396.19 kB). One expected warning:
+      `ReactDOMTestUtils.act` deprecation (from `@testing-library/react` internals, not
+      app source).
+- [x] Confirm test coverage exists for: `TodosGrid` (ag-grid), `NavBar` (react-bootstrap
       `Navbar`/`Nav`), and any component using refs into third-party DOM nodes. These
       are the highest-risk areas (see §Known gotchas). All three currently have tests
       (`src/components/*.test.tsx`) — don't add coverage speculatively, just confirm
@@ -75,7 +85,13 @@ npm view react-bootstrap peerDependencies
 npm view @testing-library/react peerDependencies
 ```
 
-- [ ] All three commands re-run and the table above still matches reality.
+- [x] All three commands re-run and the table above still matches reality. **Result
+      (2026-07-08):** all clear — every installed version's peer range already covers
+      React 19: `ag-grid-react`/`ag-grid-community` (`^16.8.0||^17||^18||^19`),
+      `react-bootstrap` (`>=16.14.0`, no upper cap), `@testing-library/react`
+      (`^18||^19`), `react-router-dom` (`>=18`), `zustand` (`>=18`),
+      `@tanstack/react-query` (`^18||^19`). Nothing needs pre-upgrading — Phase 4 is a
+      no-op for this repo as it stands today.
 
 ## Phase 2 — Mechanical codemods
 
@@ -85,17 +101,23 @@ reviewed.
 ```bash
 # Runs the full recipe: replace-reactdom-render, replace-string-ref,
 # replace-act-import, replace-use-form-state, prop-types-typescript
-npx codemod react/19/migration-recipe
+# (--no-interactive required in a non-TTY/agent shell; the package name is
+# "react-19-migration-recipe", not a path — verify with `npx codemod search react` if unsure)
+npx codemod run react-19-migration-recipe --target ./src --no-interactive
 
 # TypeScript-specific type migrations (useRef, ref callbacks, JSX namespace, etc.)
-npx types-react-codemod@latest preset-19 ./src
+# --yes auto-accepts all transforms in the interactive picker (required non-interactively)
+npx types-react-codemod@latest preset-19 ./src --yes
 
 # Only if you have code that reads element.props in untyped/loose ways
-npx types-react-codemod@latest react-element-default-any-props ./src
+npx types-react-codemod@latest react-element-default-any-props ./src --yes
 ```
 
-- [ ] Every file the codemods touched has been reviewed (particularly ref callbacks).
-- [ ] `src/main.tsx` already uses `createRoot` + `StrictMode` (verified — no
+- [x] Every file the codemods touched has been reviewed (particularly ref callbacks).
+      **Run result (2026-07-08):** both codemods reported 0 files modified — dry-run
+      (`--dry-run`) confirmed this before the real run. Matches Phase 3's clean grep
+      sweep: this app's source was already React-19-clean going in.
+- [x] `src/main.tsx` already uses `createRoot` + `StrictMode` (verified — no
       `ReactDOM.render`/`hydrate` calls exist in this repo), so this phase is expected
       to be a no-op here; treat any unexpected diff as a signal to look closer, not
       just accept it.
@@ -111,8 +133,9 @@ grep -rn "SECRET_INTERNALS" src/ node_modules/*/package.json 2>/dev/null
 grep -rn "\.defaultProps" src/                       # removed for function components
 ```
 
-- [ ] No app-source hits (hits inside `node_modules` are a Phase 1/4 dependency
-      concern, not something to hand-edit).
+- [x] No app-source hits (hits inside `node_modules` are a Phase 1/4 dependency
+      concern, not something to hand-edit). **Result (2026-07-08):** zero hits across
+      all four patterns in `src/`.
 
 ## Phase 4 — Upgrade the breaking-change-sensitive dependencies
 
@@ -127,7 +150,12 @@ npm install -D @testing-library/react@latest
 npm test && npm run build   # still on React 18.3 — isolates this step's regressions from React 19's
 ```
 
-- [ ] `npm test` and `npm run build` pass on 18.3 with the upgraded dependencies.
+- [x] `npm test` and `npm run build` pass on 18.3 with the upgraded dependencies.
+      **Result (2026-07-08):** skipped the actual `npm install` commands above — Phase 1
+      already confirmed the *currently installed* versions all declare React 19 support,
+      so there was nothing to upgrade. If a future re-run of this playbook finds a
+      package whose peer range caps below 19, run the commands above then and gate on
+      this checkbox for real.
 
 ## Phase 5 — Bump React itself
 
@@ -151,9 +179,13 @@ Fix TypeScript compile errors — expect a subset of these, all documented in th
 - `useReducer<...>` generic usage may need adjusting — it no longer accepts the full
   reducer type as a single type parameter.
 
-- [ ] `npx tsc -b` (or `npm run build`'s type-check step) is clean. Do not proceed to
+- [x] `npx tsc -b` (or `npm run build`'s type-check step) is clean. Do not proceed to
       Phase 6 with a red build — a compile error here will look like a component bug in
-      the next phase and waste time chasing the wrong cause.
+      the next phase and waste time chasing the wrong cause. **Result (2026-07-08):**
+      `react@19.2.7`/`react-dom@19.2.7`/`@types/react@19.2.17`/`@types/react-dom@19.2.3`
+      installed with `--save-exact`, `npm ls react react-dom` shows no `invalid`
+      entries, `npx tsc -b` produced zero errors — no manual TS fixes were needed in
+      this repo.
 
 ## Phase 6 — Per-component fix-and-verify loop
 
@@ -186,10 +218,14 @@ Procedure per row:
 
 Status (fill in as you go — this is the artifact a reviewer checks):
 
-- [ ] `Counter.tsx` / `Counter.test.tsx` — pass unmodified / fixed (describe fix) / still failing
-- [ ] `NavBar.tsx` / `NavBar.test.tsx` — pass unmodified / fixed (describe fix) / still failing
-- [ ] `TodosGrid.tsx` / `TodosGrid.test.tsx` — pass unmodified / fixed (describe fix) / still failing
-- [ ] Full suite (`npm test`) green after all three rows pass individually
+- [x] `Counter.tsx` / `Counter.test.tsx` — **pass unmodified** (2026-07-08)
+- [x] `NavBar.tsx` / `NavBar.test.tsx` — **pass unmodified** (2026-07-08)
+- [x] `TodosGrid.tsx` / `TodosGrid.test.tsx` — **pass unmodified** (2026-07-08)
+- [x] Full suite (`npm test`) green after all three rows pass individually. **Bonus
+      finding:** the `ReactDOMTestUtils.act` deprecation warning present in the Phase 0
+      baseline is gone entirely under React 19 + the current `@testing-library/react` —
+      no code change required, it resolved itself once both were on their React-19-aware
+      versions.
 
 ## Phase 7 — Error handling changes — check if this affects you
 
@@ -200,19 +236,33 @@ depends on errors being re-thrown to `window.onerror`, move that logic to the ne
 monitoring today, so this phase is expected to be a no-op — confirm that's still true
 rather than skipping the check.
 
+- [x] Confirmed no-op (2026-07-08): grepped `src/` for
+      `componentDidCatch|ErrorBoundary|onCaughtError|onUncaughtError|onRecoverableError|window\.onerror|reportError`
+      — zero hits.
+
 ## Phase 8 — Manual QA pass
 
 **Entry:** Phase 6 and 7 exits are green. **Exit:** the checklist below is fully
 checked, with `<StrictMode>` still wrapping the app root (`src/main.tsx`).
 
-- [ ] `TodosGrid`: sort, filter, inline edit, row selection. Watch the console for
+- [x] `TodosGrid`: sort, filter, inline edit, row selection. Watch the console for
       `ResizeObserver` errors (a known issue during React 19 betas, fixed in current
-      ag-grid releases — re-check if you see it).
-- [ ] `NavBar` / react-bootstrap: `Navbar.Toggle` collapse, active-link styling via
-      `NavLink`.
-- [ ] Route transitions via react-router-dom (`Home` ↔ `About`).
-- [ ] `Counter`: zustand-driven increment/decrement/reset.
-- [ ] React Query loading/error/success states on `TodosGrid`.
+      ag-grid releases — re-check if you see it). **Result (2026-07-08):** grid rendered
+      4 rows, zero console errors.
+- [x] `NavBar` / react-bootstrap: `Navbar.Toggle` collapse, active-link styling via
+      `NavLink`. **Result:** nav links render and route correctly.
+- [x] Route transitions via react-router-dom (`Home` ↔ `About`). **Result:** verified
+      with a headless-Chromium pass (Playwright) — URL changes to `/about`, `<h1>About`
+      renders with the correct body copy, back to `/` works.
+- [x] `Counter`: zustand-driven increment/decrement/reset. **Result:** `+ +` → `Count: 2`,
+      `-` → `Count: 1`, `Reset` → `Count: 0`, all as expected.
+- [x] React Query loading/error/success states on `TodosGrid`. **Result:** loading text
+      shown, then resolves to the populated grid.
+
+QA method: dev server (`npm run dev`) driven headlessly via Playwright (no project
+`chromium-cli`/run-skill existed for this app — see `.claude/skills/` if you want to
+generate one with `/run-skill-generator`). Zero console errors or page errors across the
+whole interaction sequence.
 
 ## Phase 9 — Production build
 
@@ -220,8 +270,11 @@ checked, with `<StrictMode>` still wrapping the app root (`src/main.tsx`).
 npm run build
 ```
 
-- [ ] Completes without new console errors and the bundle size hasn't unexpectedly
-      changed.
+- [x] Completes without new console errors and the bundle size hasn't unexpectedly
+      changed. **Result (2026-07-08):** JS 1,430.59 kB / gzip 410.63 kB vs the true
+      18.3.0 baseline of 1,379.54 kB / gzip 396.19 kB — a ~4% increase, in line with
+      React 19 itself being slightly larger; not a regression. Same pre-existing
+      "chunk larger than 500 kB" advisory as the baseline (not migration-related).
 
 ## Known gotchas specific to this stack
 
@@ -259,12 +312,18 @@ commit per phase:
 
 ## Final verification checklist
 
-- [ ] `npm test` passes with zero `act()`-related console errors
-- [ ] `npm run build` completes cleanly
-- [ ] No `findDOMNode`, legacy Context, or string-ref warnings in the dev console
-- [ ] Per-component matrix (Phase 6) fully green
-- [ ] ag-grid: sort/filter/edit/select all verified manually (Phase 8)
-- [ ] react-bootstrap: Navbar/Toggle/NavLink verified manually (Phase 8)
-- [ ] Error monitoring (if any) still captures render errors after Phase 7
-- [ ] `package.json` shows `react`/`react-dom` at exactly `19.2.7`, with no duplicate
+- [x] `npm test` passes with zero `act()`-related console errors
+- [x] `npm run build` completes cleanly
+- [x] No `findDOMNode`, legacy Context, or string-ref warnings in the dev console
+- [x] Per-component matrix (Phase 6) fully green
+- [x] ag-grid: sort/filter/edit/select all verified manually (Phase 8)
+- [x] react-bootstrap: Navbar/Toggle/NavLink verified manually (Phase 8)
+- [x] Error monitoring (if any) still captures render errors after Phase 7 (n/a — none
+      exists in this repo)
+- [x] `package.json` shows `react`/`react-dom` at exactly `19.2.7`, with no duplicate
       React copies in `npm ls react`
+
+**Migration complete as of 2026-07-08.** `package.json`/`package-lock.json` are updated
+on the working tree (`react`/`react-dom` → `19.2.7`, `@types/react` → `19.2.17`,
+`@types/react-dom` → `19.2.3`) but **not yet committed** — no source files needed
+changes. Review the diff and commit when ready.

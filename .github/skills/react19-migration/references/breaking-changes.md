@@ -7,19 +7,27 @@ command.
 
 ## Removed APIs
 
+Codemods are published to the codemod.com registry and invoked as
+`npx codemod run <package-name> --target <path> --no-interactive` (not
+`npx codemod <package-name>` — that older path-style invocation no longer resolves).
+Package names change occasionally; if a command below 404s, re-verify with
+`npx codemod search react-19` before assuming the change has no codemod.
+
 | Removed | Replacement | Codemod |
 |---|---|---|
-| `ReactDOM.render(el, container)` | `createRoot(container).render(el)` | `npx codemod react/19/replace-reactdom-render --target <path>` |
-| `ReactDOM.hydrate(el, container)` | `hydrateRoot(container, el)` | included in `react/19/migration-recipe` |
+| `ReactDOM.render(el, container)` | `createRoot(container).render(el)` | `npx codemod run react-19-replace-reactdom-render --target <path> --no-interactive` |
+| `ReactDOM.hydrate(el, container)` | `hydrateRoot(container, el)` | included in `react-19-migration-recipe` |
 | `ReactDOM.unmountComponentAtNode(container)` | `root.unmount()` | manual — requires holding a reference to the root created by `createRoot` |
 | `ReactDOM.findDOMNode(instance)` | a `ref` on the actual DOM node you need | manual — no clean automated replacement since it's context-dependent |
-| String refs (`ref="foo"`, `this.refs.foo`) | callback refs or `useRef`/`createRef` | `npx codemod react/19/replace-string-ref --target <path>` |
-| `react-dom/test-utils` `act` | `import { act } from 'react'` | `npx codemod react/19/replace-act-import --target <path>` |
-| `propTypes` runtime checks | TypeScript, or the `prop-types` package purely for docs (checks are silently ignored, not an error, but stop protecting you) | `npx codemod react/prop-types-typescript --target <path>` (part of the migration recipe) |
-| `defaultProps` on **function** components | ES6 default parameters (`function Foo({ x = 1 })`) | manual — class components are unaffected and keep `defaultProps` |
-| Legacy Context (`contextTypes`, `getChildContext`) | `contextType` / `useContext` | manual — deprecated since React 16.6, now fully removed |
+| String refs (`ref="foo"`, `this.refs.foo`) | callback refs or `useRef`/`createRef` | `npx codemod run react-19-replace-string-ref --target <path> --no-interactive` |
+| `react-dom/test-utils` `act` | `import { act } from 'react'` | `npx codemod run react-19-replace-act-import --target <path> --no-interactive` |
+| `propTypes` runtime checks | TypeScript, or the `prop-types` package purely for docs (checks are silently ignored, not an error, but stop protecting you) | included in `react-19-migration-recipe` (prop-types-to-TypeScript step) |
+| `defaultProps` on **function** components | ES6 default parameters (`function Foo({ x = 1 })`) | `npx codemod run react-19-replace-default-props --target <path> --no-interactive` |
+| Legacy Context (`contextTypes`, `getChildContext`) | `contextType` / `useContext` | `npx codemod run react-19-remove-legacy-context --target <path> --no-interactive` |
 | UMD builds of `react`/`react-dom` | ESM/CJS builds only | only relevant if you load React via a `<script>` CDN tag without a bundler |
-| `useFormState` | `useActionState` (same shape, renamed) | `npx codemod react/19/replace-use-form-state --target <path>` |
+| `useFormState` | `useActionState` (same shape, renamed) | `npx codemod run react-19-replace-use-form-state --target <path> --no-interactive` |
+| `createFactory` | JSX or plain function calls | `npx codemod run react-19-replace-create-factory --target <path> --no-interactive` |
+| String-form legacy `forwardRef` wrapping (no longer needed — refs are a regular prop now) | drop the `forwardRef` wrapper | `npx codemod run react-19-remove-forward-ref --target <path> --no-interactive` |
 
 ## Changed behavior (not removed, but different)
 
@@ -103,9 +111,9 @@ React itself.
   like React 19 bugs when they're actually a stale testing-library version.
 - **Anything importing `act` from `react-dom/test-utils`.** This throws once
   `react-dom/test-utils` no longer exports it. Codemod:
-  `npx codemod react/19/replace-act-import --target <path>` — but also check custom
-  test-setup files and any internal testing utility wrappers, since codemods only scan
-  application source by default.
+  `npx codemod run react-19-replace-act-import --target <path> --no-interactive` — but
+  also check custom test-setup files and any internal testing utility wrappers, since
+  codemods only scan application source by default.
 - **`<Activity>` (introduced in React 19.2) and stateful third-party widgets.** If you
   adopt `<Activity mode="hidden">` to keep off-screen UI mounted, verify how any
   complex stateful child (data grids, rich text editors, canvas-based widgets) behaves
