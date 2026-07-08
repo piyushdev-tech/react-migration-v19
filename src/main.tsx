@@ -7,6 +7,11 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import './index.css'
 import App from './App.tsx'
 import { queryClient } from './api/queryClient'
+import { mountReleaseBanner } from './legacy/mountReleaseBanner'
+
+// Legacy imperatively-mounted banner widget, running alongside the modern
+// createRoot tree — see src/legacy/mountReleaseBanner.tsx (migrated by SKILL.md).
+mountReleaseBanner()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
