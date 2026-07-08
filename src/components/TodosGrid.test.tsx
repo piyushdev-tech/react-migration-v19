@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TodosGrid } from './TodosGrid'
 
-function renderWithQueryClient(ui: React.ReactElement) {
+function renderWithQueryClient(ui: React.ReactElement<any>) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
