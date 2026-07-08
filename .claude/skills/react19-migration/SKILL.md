@@ -50,12 +50,16 @@ Those still deserve normal care — see "What NOT to do" — but don't let a dep
 
 ### Phase 0 — Baseline
 
-**Entry:** repo is on React 18.x. **Exit:** you have a clean, reproducible baseline to
-diff against.
+**Entry:** repo is on React 18.x, on a dedicated git branch (the Phase 2 codemods
+commit as they go — never run them on `main`/`master` or a dirty tree). **Exit:** you
+have a clean, reproducible baseline to diff against.
 
-- Confirm a dedicated git branch exists (codemods commit as they go — never run them on
-  `main`/`master` or a dirty tree).
-- Confirm CI/main is green before you start.
+This phase is deliberately lean: its only two load-bearing outputs are the **18.3
+warning sweep** and the **captured test/build baseline**. Later gates diff against them
+— Phase 4's "still green *on React 18.3*" exit and Phase 6's per-component comparison
+are both meaningless without a baseline captured here — so these two steps stay even if
+you trim everything else (CI-green ceremony, etc.):
+
 - If not already on the latest `react@18.3.x` patch, upgrade to it first — it's
   functionally identical to 18.2 but adds console warnings for everything that breaks in
   19. Run the app and test suite once *before* touching versions and read the console
@@ -111,17 +115,42 @@ Individual codemods exist if only one change is needed — see
 file the codemods touch; they're reliable but not infallible, particularly around ref
 callbacks.
 
-### Phase 3 — Grep sweep for what codemods can't catch (validation-only)
+### Phase 3 — Category-organized grep sweep for what codemods can't catch (validation-only)
 
-**Entry:** Phase 2 exit is green. **Exit:** every hit below is either fixed or
-consciously triaged (e.g. it's inside a third-party package, not app source).
+**Entry:** Phase 2 exit is green. **Exit:** every hit in 3a and 3b is either fixed or
+consciously triaged (e.g. it's inside a third-party package, not app source), and each
+category's fixes are committed as their own commit.
+
+Run this sweep **grouped by the breaking-change categories in
+`references/breaking-changes.md`** (its headings map 1:1 to the subsections below), and
+commit each category's fixes separately (`fix(react19): removed-apis grep sweep`,
+`fix(react19): changed-behavior grep sweep`). One category = one revertable unit: this
+gives per-category traceability for a reviewer or a `git revert` *without* turning the
+later per-component work (Phase 6) into a blanket sweep — the statically greppable
+categories are cleared here, the emergent per-component failures stay test-driven there.
+
+**3a — Removed APIs** (reference doc §"Removed APIs"). Gone entirely; these throw at
+runtime. Codemods (Phase 2) catch most call sites — this sweep catches what they miss:
 
 ```bash
 grep -rn "contextTypes\|getChildContext" <src>      # legacy Context API, removed
 grep -rn "\.defaultProps" <src>                      # removed for function components
-grep -rn "SECRET_INTERNALS" <src>                    # renamed in React 19
 grep -rln "findDOMNode" <src>                        # removed entirely, throws now
 ```
+
+**3b — Changed behavior** (reference doc §"Changed behavior"). Not removed, but the
+semantics differ — these *won't* error or warn, so a grep is the only way to surface
+them:
+
+```bash
+grep -rn "SECRET_INTERNALS" <src>                    # internal API renamed in React 19
+# element.ref moved into element.props.ref — flag direct reads that aren't the hook/HOF forms
+grep -rn "\.ref\b" <src> | grep -v "\.props\.ref\|useRef\|forwardRef\|createRef"
+```
+
+**3c — TypeScript-only** (reference doc §"TypeScript-only changes"). No grep pass here:
+these surface as `tsc` compile errors *after* the `@types/react@19` bump, so they're
+resolved at Phase 5's exit gate, not now. Listed only to keep the category set complete.
 
 ### Phase 4 — Upgrade the flagged third-party packages
 
