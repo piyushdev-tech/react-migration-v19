@@ -42,17 +42,25 @@ grep -rn "<pattern>" src/            # source search
 ```
 
 Only pause for explicit confirmation before commands that **mutate** the working tree
-or install/replace packages (`npm install`, the codemods, editing files, `git commit`).
-Those still deserve normal care — see "What NOT to do" — but don't let a dependency
-*check* wait on the same approval as a dependency *change*.
+or install/replace packages (`npm install`, the codemods, editing files). Those still
+deserve normal care — see "What NOT to do" — but don't let a dependency *check* wait on
+the same approval as a dependency *change*.
+
+**Do not run `git commit` at any phase, and do not instruct the codemods to commit.**
+Every phase's edits (codemods, dependency bumps, manual fixes) stay as uncommitted
+working-tree changes throughout the whole migration. Leave everything staged/unstaged
+for the user to review and commit themselves at the end, on whatever cadence they
+prefer — this skill never commits on your behalf unless the user explicitly asks for a
+commit at a specific point.
 
 ## Phases
 
 ### Phase 0 — Baseline
 
-**Entry:** repo is on React 18.x, on a dedicated git branch (the Phase 2 codemods
-commit as they go — never run them on `main`/`master` or a dirty tree). **Exit:** you
-have a clean, reproducible baseline to diff against.
+**Entry:** repo is on React 18.x, on a dedicated git branch (never run the Phase 2
+codemods on `main`/`master` or a dirty tree — a dedicated branch keeps the working tree
+safe to inspect, `git diff`, or discard by hand, since nothing gets committed
+automatically). **Exit:** you have a clean, reproducible baseline to diff against.
 
 This phase is deliberately lean: its only two load-bearing outputs are the **18.3
 warning sweep** and the **captured test/build baseline**. Later gates diff against them
@@ -98,8 +106,8 @@ peer range / notes) — this becomes §2 of the project's `instructions.md`.
 **Entry:** Phase 1 exit is documented. **Exit:** codemods have run and every touched
 file has been reviewed.
 
-Run the official codemods before any manual edits, on the branch from Phase 0 (required
-— they commit as they go):
+Run the official codemods before any manual edits, on the branch from Phase 0. Leave
+their output uncommitted — do not run `git commit` after this step:
 
 ```bash
 # Package is "react-19-migration-recipe" (verify with `npx codemod search react` — the
@@ -119,15 +127,16 @@ callbacks.
 
 **Entry:** Phase 2 exit is green. **Exit:** every hit in 3a and 3b is either fixed or
 consciously triaged (e.g. it's inside a third-party package, not app source), and each
-category's fixes are committed as their own commit.
+category's fixes are called out separately in your summary to the user (no commits).
 
 Run this sweep **grouped by the breaking-change categories in
 `references/breaking-changes.md`** (its headings map 1:1 to the subsections below), and
-commit each category's fixes separately (`fix(react19): removed-apis grep sweep`,
-`fix(react19): changed-behavior grep sweep`). One category = one revertable unit: this
-gives per-category traceability for a reviewer or a `git revert` *without* turning the
-later per-component work (Phase 6) into a blanket sweep — the statically greppable
-categories are cleared here, the emergent per-component failures stay test-driven there.
+keep each category's fixes visibly grouped in your reporting (e.g. "removed-apis: fixed
+X, Y" / "changed-behavior: fixed Z") rather than one undifferentiated pile of edits —
+still don't commit any of it. One category = one traceable unit *in the diff and in your
+summary*, without turning the later per-component work (Phase 6) into a blanket sweep —
+the statically greppable categories are cleared here, the emergent per-component
+failures stay test-driven there.
 
 **3a — Removed APIs** (reference doc §"Removed APIs"). Gone entirely; these throw at
 runtime. Codemods (Phase 2) catch most call sites — this sweep catches what they miss:
@@ -237,9 +246,13 @@ If the user wants a document out of this (not just live edits to their repo), wr
 update `instructions.md` in their repo root following the structure of this skill's own
 example at the bottom of `references/breaking-changes.md` — i.e., a compatibility
 matrix specific to *their* packages, the phase sequence with gates, the per-component
-matrix from Phase 6, a stack-specific gotchas section, and a rollback plan. Don't hand
-back a generic "here's what changed in React 19" essay; it should read like an internal
-runbook for their exact codebase.
+matrix from Phase 6, a stack-specific gotchas section, and a rollback plan. Since nothing
+is committed automatically, frame the rollback plan around the uncommitted working tree
+(`git diff` / `git checkout -- <file>` / `git stash` to undo some or all of it) rather
+than reverting per-phase commits — unless the user tells you they *did* commit at some
+point along the way, in which case describe rollback against whatever commit structure
+actually exists. Don't hand back a generic "here's what changed in React 19" essay; it
+should read like an internal runbook for their exact codebase.
 
 ## What NOT to do
 
@@ -254,6 +267,9 @@ runbook for their exact codebase.
   it) actually failed — that phase is test-driven on purpose, not a rewrite pass.
 - Don't treat a read-only validation command (see the auto-approved list above) with
   the same caution as a mutating one — that slows the loop down without reducing risk.
+- Don't run `git commit` at any phase (including inside the codemods step) — every
+  phase's edits stay uncommitted in the working tree unless the user explicitly asks you
+  to commit.
 
 ## Reference
 
