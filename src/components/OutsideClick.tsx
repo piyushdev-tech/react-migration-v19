@@ -1,5 +1,4 @@
 import { Component, createRef } from 'react'
-import { findDOMNode } from 'react-dom'
 
 interface OutsideClickProps {
   label: string
@@ -14,7 +13,7 @@ export class OutsideClick extends Component<OutsideClickProps> {
   private wrapperRef = createRef<HTMLDivElement>()
 
   componentDidMount() {
-    const node = findDOMNode(this)
+    const node = this.wrapperRef.current
     if (node instanceof HTMLElement) {
       node.setAttribute('data-measured-width', String(node.offsetWidth))
     }

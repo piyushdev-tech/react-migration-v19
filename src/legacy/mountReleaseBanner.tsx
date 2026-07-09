@@ -1,4 +1,4 @@
-import * as ReactDOM from 'react-dom'
+import { createRoot } from "react-dom/client";
 
 function ReleaseBanner() {
   return (
@@ -19,8 +19,9 @@ export function mountReleaseBanner() {
     container.id = 'release-banner'
     document.body.prepend(container)
   }
-  ReactDOM.render(<ReleaseBanner />, container)
+  const root = createRoot(container);
+  root.render(<ReleaseBanner />);
   return () => {
-    ReactDOM.unmountComponentAtNode(container!)
+    root.unmount();
   }
 }

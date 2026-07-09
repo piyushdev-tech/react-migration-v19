@@ -12,7 +12,7 @@ export interface TextFieldProps {
 //   2. `defaultProps` on a function component — ignored in React 19; use ES6
 //      default parameters instead (codemod: react-19-replace-default-props).
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
-  function TextField({ label, placeholder, onChange }, ref) {
+  function TextField({ label, placeholder = 'Type here…', onChange }, ref) {
     return (
       <label className="d-flex flex-column gap-1">
         <span className="fw-semibold">{label}</span>
@@ -26,7 +26,3 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     )
   },
 )
-
-TextField.defaultProps = {
-  placeholder: 'Type here…',
-}

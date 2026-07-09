@@ -11,8 +11,6 @@
  *     default parameters (codemod: react-19-replace-default-props).
  */
 import { Component } from 'react'
-import PropTypes from 'prop-types'
-
 export class LegacyTodoList extends Component {
   focusFirst() {
     // String-ref access, removed in React 19.
@@ -21,7 +19,9 @@ export class LegacyTodoList extends Component {
 
   render() {
     return (
-      <ul ref="list" className="list-group">
+      <ul ref={(ref) => {
+        this.refs.list = ref;
+      }} className="list-group">
         {this.props.items.map((item) => (
           <li key={item} className="list-group-item" tabIndex={0}>
             {item}
@@ -32,14 +32,11 @@ export class LegacyTodoList extends Component {
   }
 }
 
-export function LegacyTodoCount({ count }) {
+interface LegacyTodoCountProps {
+  count?: number
+}
+
+export function LegacyTodoCount({ count = 0 }: LegacyTodoCountProps) {
   return <span className="badge bg-secondary">{count} items</span>
 }
 
-LegacyTodoCount.defaultProps = {
-  count: 0,
-}
-
-LegacyTodoCount.propTypes = {
-  count: PropTypes.number,
-}

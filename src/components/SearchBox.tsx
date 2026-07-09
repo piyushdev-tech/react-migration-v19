@@ -12,7 +12,9 @@ export function SearchBox() {
   // the returned value; React 19 treats it as a cleanup function, so the types
   // reject it — the `no-implicit-ref-callback-return` codemod (SKILL.md Phase 5)
   // wraps the body in braces so nothing is returned.
-  const attachInput = (node: HTMLInputElement | null) => (inputRef.current = node)
+  const attachInput = (node: HTMLInputElement | null) => {
+    inputRef.current = node
+  }
 
   return (
     <div className="d-flex flex-column gap-2" data-testid="search-box">
