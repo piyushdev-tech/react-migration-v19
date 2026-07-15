@@ -16,14 +16,16 @@ and [`IMPLEMENT.md`](./.claude/skills/react19-migration/IMPLEMENT.md) (Phases 4�
 execution) — load `PLAN.md` first, always; only load `IMPLEMENT.md` once `PLAN.md`'s
 Phase 3 is green.
 
-Each phase below has an **entry condition** and an **exit condition**. Don't start
-phase N+1 until phase N's exit condition is actually green — the gates are what make it
-safe to run this mostly unattended.
+**No step in this migration commits anything to git.** Every phase's edits — codemods,
+dependency bumps, the React version bump, manual fixes — are left as uncommitted
+working-tree changes. Review the diff with `git diff` / `git status` and commit
+yourself, on whatever cadence you prefer.
+
+**Migration not yet started.** `package.json` still pins `react@18.3.0`, and none of the
+source-level fixes below are present in `src/` yet. Checklist items are unchecked until
+the corresponding phase is actually executed and verified against the live source.
 
 ## Auto-approved commands (read-only — don't stop to confirm these)
-
-These inspect state and change nothing, so they run freely across every phase without
-per-command approval. They're pre-authorized in `.claude/settings.local.json`:
 
 ```bash
 npm view <pkg> peerDependencies
