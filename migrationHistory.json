@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "migration": {
+    "from": "18.3.0",
+    "to": "19.2.7"
+  },
+  "branch": "upgrade/react-19",
+  "status": "not_started",
+  "createdAt": "2026-07-16T02:45:00Z",
+  "lastUpdatedAt": "2026-07-16T02:45:00Z",
+  "currentPhase": 0,
+  "phases": [
+    { "id": 0, "name": "Baseline", "stage": "plan", "status": "pending" },
+    { "id": 1, "name": "Live peer-dependency matrix", "stage": "plan", "status": "pending" },
+    { "id": 2, "name": "TypeScript compatibility check", "stage": "plan", "status": "pending" },
+    { "id": 3, "name": "Vulnerability & version-stability policy", "stage": "plan", "status": "pending" },
+    { "id": 4, "name": "Mechanical codemods", "stage": "implement", "status": "pending" },
+    { "id": 5, "name": "Grep sweep", "stage": "implement", "status": "pending" },
+    { "id": 6, "name": "Upgrade dependencies + bump React", "stage": "implement", "status": "pending" },
+    { "id": 7, "name": "Per-component fix-and-verify loop", "stage": "implement", "status": "pending" },
+    { "id": 8, "name": "Business-logic freeze review", "stage": "implement", "status": "pending" },
+    { "id": 9, "name": "Full verification", "stage": "implement", "status": "pending" },
+    { "id": 10, "name": "Deliverable", "stage": "implement", "status": "pending" }
+  ],
+  "findings": {
+    "dependencyClassification": [],
+    "typeScriptFloor": null,
+    "chosenReactVersion": null,
+    "vulnerabilityBaseline": null
+  },
+  "blockers": [],
+  "resumeInstructions": "No migration run has been checkpointed yet — start at Phase 0 (PLAN.md). Note: as of this file's creation, package.json already shows react@19.2.7 / @types/react@19.2.17 while this file says 'not_started' — that's leftover from ad-hoc testing, not a tracked run. Phase 0's baseline check (including its node_modules/package.json drift check) will surface and reconcile this; don't assume either source of truth without re-verifying live."
+}

@@ -9,6 +9,12 @@ Each phase has an **entry condition** and an **exit condition**. Don't start pha
 until phase N's exit condition is actually green — the gates are what make it safe to
 run this mostly unattended.
 
+**After each phase's exit condition goes green, update `migrationHistory.json` before
+moving to the next phase** — same file, same protocol as `PLAN.md` used for Phases
+0–3 (see `references/migration-history.md`). If you're picking this file up because
+`migrationHistory.json` says Stage 1 is already complete, trust its recorded
+`findings` rather than re-deriving them, per that doc's guidance.
+
 ## Phase 4 — Mechanical codemods
 
 **Entry:** `PLAN.md` Phases 1–3 are documented. **Exit:** codemods have run and every

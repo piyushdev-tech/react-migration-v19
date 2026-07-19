@@ -23,6 +23,22 @@ This skill is written to be **repo-agnostic** — every check is a live command 
 number. Re-run the checks fresh on every repo; don't reuse findings from a previous
 migration.
 
+## Resuming across sessions, machines, or people
+
+A migration can get interrupted partway through — a token/time budget runs out, or the
+work needs to be handed off (e.g. pushed to a feature branch for a colleague to
+finish). `migrationHistory.json` at the repo root exists for exactly this: it records
+which phase was last completed, so a later invocation of this skill — by anyone, on
+any machine — resumes instead of starting over. Check for it before Phase 0, and
+update it after every phase's exit condition goes green. Full protocol and schema:
+`references/migration-history.md` — read it before touching this file for the first
+time in a session.
+
+The `react19-migration-agent` custom agent (`.claude/agents/react19-migration-agent.md`)
+wraps this entire skill plus the checkpoint protocol into a single delegatable unit —
+use it (or its instructions as a model) when you want the whole plan-and-implement
+workflow driven end to end, including automatic resumption.
+
 ## Two stages, two files — load only the one you need
 
 The phases are split across two files under this skill's directory so you don't pay to

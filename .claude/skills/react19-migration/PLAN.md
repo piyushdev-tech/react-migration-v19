@@ -10,6 +10,14 @@ until phase N's exit condition is actually green. Once Phase 3's exit is green, 
 task calls for actually performing the migration (not just assessing it), read
 `IMPLEMENT.md` next — its phases assume everything produced here already exists.
 
+**Before Phase 0:** check whether `migrationHistory.json` exists at the repo root. If
+it does, this isn't necessarily a fresh assessment — read it and resume from the first
+non-`"complete"` phase per `references/migration-history.md`'s protocol, rather than
+blindly restarting at Phase 0. If it doesn't exist, create it (same reference doc has
+the schema) and proceed normally. **After each phase's exit condition goes green,
+update `migrationHistory.json` before moving to the next phase** — this is what makes
+it safe to hand the migration off mid-flight.
+
 ## Phase 0 — Baseline
 
 **Entry:** repo is on React 18.x. **Exit:** you have a clean, reproducible baseline to
