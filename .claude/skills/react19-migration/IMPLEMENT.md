@@ -15,6 +15,14 @@ moving to the next phase** — same file, same protocol as `PLAN.md` used for Ph
 `migrationHistory.json` says Stage 1 is already complete, trust its recorded
 `findings` rather than re-deriving them, per that doc's guidance.
 
+**Scope:** every `<src>`/`./src` placeholder below means the folders/files recorded in
+`migrationHistory.json`'s `scope` (`PLAN.md` Phase 0 decided this — don't re-ask or
+re-decide it here). If `scope.mode` is `"custom"`, run the Phase 4/5/8 commands once
+per path in `scope.paths` rather than against the whole tree. **Phase 6 is the one
+exception** — the React version bump always applies to the whole repo regardless of
+scope, and Phase 9's full-suite verification runs against the whole app, not just the
+scoped folders, since the runtime is shared either way.
+
 ## Phase 4 — Mechanical codemods
 
 **Entry:** `PLAN.md` Phases 1–3 are documented. **Exit:** codemods have run and every
@@ -26,6 +34,7 @@ Run the official codemods before any manual edits, on the branch from Phase 0 (r
 ```bash
 # Package is "react-19-migration-recipe" (verify with `npx codemod search react` — the
 # registry and CLI syntax have changed before). --no-interactive is required outside a TTY.
+# Replace ./src with the recorded scope path(s) if scope.mode is "custom".
 npx codemod run react-19-migration-recipe --target ./src --no-interactive
 
 # --yes auto-accepts all transforms in the picker; required outside a TTY.
@@ -90,8 +99,9 @@ This is the phase where component files actually change, and it's structured so 
 sweep. Don't batch-edit every component up front; let the failing test point at the
 file.
 
-1. Enumerate component/test pairs: every component file that has a sibling test file
-   (`*.test.tsx`/`.spec.tsx` or the project's equivalent convention).
+1. Enumerate component/test pairs **within the recorded scope**: every component file
+   under `scope.paths` that has a sibling test file (`*.test.tsx`/`.spec.tsx` or the
+   project's equivalent convention).
 2. For each pair, in isolation:
    ```bash
    npx vitest run <path-to-Component.test.tsx>   # (or the project's test runner equivalent)
@@ -166,24 +176,44 @@ checklist below is fully checked.
    re-thrown/double-logged — React 19 changed this (see reference doc); move it to
    `onCaughtError`/`onUncaughtError`/`onRecoverableError` if so (this is itself a
    mechanical, Phase-8-allowed change).
-2. `npm test` — zero `act()`-related console errors.
+2. `npm test` — the **whole suite**, not just the scoped folders (zero `act()`-related
+   console errors). React itself changed for the entire app regardless of scope.
 3. Manual QA pass in the running app, still under `<StrictMode>`, exercising every area
-   touched by a Phase 6 dependency upgrade.
+   touched by a Phase 6 dependency upgrade — including areas **outside** the migration
+   scope, since they now run on React 19 too even though they weren't proactively
+   fixed. If something outside scope actually breaks (build failure, runtime throw,
+   failing test), that's not a minor note — it means this scoped migration isn't
+   shippable as-is. Stop and put the decision to the user explicitly: expand scope to
+   fix it now, or hold the React bump until it's addressed separately. Don't silently
+   fix it yourself (that's unplanned scope creep) and don't silently ship it broken.
 4. `npm run build` — completes cleanly, no unexpected bundle-size jump.
 5. `npm audit` once more — confirm the vulnerability delta matches what `PLAN.md` Phase
    3 recorded (no surprise new findings from the final dependency graph).
 
 ## Phase 10 — Deliverable
 
-If the user wants a document out of this (not just live edits to their repo), write or
-update `instructions.md` in their repo root following the structure of this skill's own
-example at the bottom of `references/breaking-changes.md` — i.e., a compatibility
-matrix specific to *their* packages with the `PLAN.md` Phase 1 classification and Phase
-2 TypeScript floor finding, the Phase 3 vulnerability delta, the phase sequence with
-gates, the per-component matrix from Phase 7, a note confirming the Phase 8
-business-logic-freeze review, a stack-specific gotchas section, and a rollback plan.
-Don't hand back a generic "here's what changed in React 19" essay; it should read like
-an internal runbook for their exact codebase.
+Two different documents serve two different purposes here — don't blend them:
+
+- **`instructions.md`** (repo root) is a **generic, durable playbook** — a compatibility
+  matrix keyed to *categories* of packages this project depends on (routing, UI kit,
+  data grid, testing stack — not "as of 2026-07-19, react-bootstrap@2.10.10 is ✅"), the
+  phase sequence with gates, a stack-specific gotchas section, and a rollback plan. If
+  it doesn't exist yet, write it following the structure of this skill's own example at
+  the bottom of `references/breaking-changes.md`. If it already exists, **do not** add
+  dated "result of this run" sections, per-component result tables, status banners, or
+  checked-off checklists to it — that turns a reusable runbook into a transcript of one
+  execution, which is exactly what confuses the *next* run. Checklists in
+  `instructions.md` stay unchecked, as a template.
+- **`migrationHistory.json`** is where this run's actual findings live — the live
+  dependency classification, the TypeScript floor result, the vulnerability delta, the
+  per-component pass/fail/fixed matrix from Phase 7, and (if `scope.mode` was
+  `"custom"`) which folders were migrated and which were explicitly left out. It's
+  already being kept current per-phase (Step 3 above) — Phase 10 doesn't add new
+  reporting duty here, just confirm it's complete and accurate as the final record.
+
+If the user wants a narrative summary beyond what's in `migrationHistory.json` (e.g. for
+a PR description), write that directly in your response to them — not into
+`instructions.md`.
 
 ## What NOT to do in this stage
 
@@ -199,3 +229,7 @@ an internal runbook for their exact codebase.
   flag it instead of applying or discarding it unilaterally.
 - Don't call the migration done without Phase 9's `npm audit` recheck against the
   `PLAN.md` Phase 3 baseline.
+- Don't let a scoped run imply the rest of the repo is safe — Phase 6's React bump is
+  whole-repo regardless of `scope`; say explicitly what wasn't fixed, and escalate
+  (don't quietly patch or quietly ignore) if something out-of-scope actually breaks in
+  Phase 9.

@@ -27,7 +27,32 @@ resumable by someone else if you don't finish it.
    project-specific playbook layered on top of the generic skill — same as `SKILL.md`
    itself instructs.
 
-## Step 2 — Follow the phases, in order, for real
+## Step 2 — Determine migration scope (whole repo, or specific folders)
+
+Before Phase 0 does anything else, settle scope — whether this run migrates the whole
+source tree or just folders/files the user names:
+
+- If `migrationHistory.json` already has a `scope` recorded, use it. Don't re-ask, and
+  don't second-guess it mid-run.
+- Otherwise, check whether the task you were given already specifies a scope (e.g. "just
+  migrate `src/checkout`"). If so, use that.
+- Otherwise, if you can get a live answer from the user in this session, ask directly:
+  whole `src/` tree, or specific folders? If you have no way to block for a live answer
+  (for example you were dispatched as a background task with no scope specified),
+  default to the whole source tree — but say so explicitly and prominently in your
+  final report, so the user can correct it on the next run rather than being surprised
+  the whole repo was touched.
+- Record the decision in `migrationHistory.json`'s `scope` field immediately (schema in
+  `references/migration-history.md`'s "Migration scope" section) — before Phase 0's
+  other checks, so it's captured even if you stop right after.
+- **Never forget:** Phase 6 (the React version bump) is whole-repo no matter what
+  `scope` says — there's no such thing as running two React majors in one app. Scope
+  only controls which files Phases 4/5/7/8 proactively fix. If Phase 9's manual QA
+  finds something outside scope that's actually broken by the bump, that's a shipping
+  blocker for this run, not a note for later — surface it to the user immediately and
+  let them decide whether to expand scope now or hold the bump.
+
+## Step 3 — Follow the phases, in order, for real
 
 - Read `.claude/skills/react19-migration/PLAN.md` (Phases 0–3) before doing anything
   else, even if you believe you already know the answers — verify live, every time,
@@ -41,7 +66,7 @@ resumable by someone else if you don't finish it.
 - Load `.claude/skills/react19-migration/references/breaking-changes.md` whenever you
   need the exact mechanism behind a specific breaking change or codemod command.
 
-## Step 3 — Checkpoint relentlessly
+## Step 4 — Checkpoint relentlessly
 
 After **every phase's exit condition goes green** — not just at the end — update
 `migrationHistory.json` (Read then Write, full-file rewrite; see the reference doc for
@@ -56,7 +81,7 @@ anything requiring a decision only the user can make — set `migrationHistory.j
 status to `"blocked"`, fill in `blockers` with enough detail that a stranger could act
 on it, and stop. Don't guess past a blocker.
 
-## Step 4 — Review discipline, not just execution
+## Step 5 — Review discipline, not just execution
 
 You inherit all of the skill's own rules — don't relax them because you're "just
 running the agent":
@@ -73,7 +98,7 @@ running the agent":
   installing `@latest`; never run `npm audit fix --force`; don't fold unrelated
   vulnerability fixes into this migration.
 
-## Step 5 — Report clearly at every stopping point
+## Step 6 — Report clearly at every stopping point
 
 Whether you finished everything, paused, or hit a blocker, always tell the user:
 
@@ -83,6 +108,9 @@ Whether you finished everything, paused, or hit a blocker, always tell the user:
   hand-off to a colleague happens by the user pushing the branch themselves).
 - The exact next step for whoever resumes — quote or paraphrase
   `migrationHistory.json`'s `resumeInstructions`.
+- Whether this run was scoped to specific folders or covered the whole repo, and if
+  scoped, which folders were **not** proactively fixed — don't let that be inferred
+  silently from the diff.
 
 ## What NOT to do
 
@@ -96,3 +124,7 @@ Whether you finished everything, paused, or hit a blocker, always tell the user:
   18.3.0) — reconcile the discrepancy before trusting anything built on top of it.
 - Don't write narrative transcripts into `migrationHistory.json` — keep its `summary`
   fields short; put detailed narrative in your own response to the user instead.
+- Don't assume "whole repo" scope without saying so, and don't assume a narrower scope
+  than what's recorded — both are silent decisions the user should see made explicit.
+- Don't let a scoped run imply the rest of the repo was verified — Phase 6's React
+  bump always applies everywhere.

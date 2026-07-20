@@ -21,6 +21,19 @@ safe to run this mostly unattended. Re-verify every live check below on each run
 than trusting a prior run's findings — package versions, peer ranges, and the state of
 `src/` can all have changed since.
 
+**Migration scope:** by default this covers the whole `src/` tree. A run can instead be
+scoped to specific folders/files — see `PLAN.md` Phase 0 and
+`references/migration-history.md`'s "Migration scope" section for how that's decided
+and recorded. One thing scope never changes: Phase 6's React version bump always
+applies to the whole repo, since an app can't run two React majors at once.
+
+**Cross-session progress:** `migrationHistory.json` at the repo root tracks which phase
+was last completed, so a run can be resumed later — by the same person, a colleague, or
+a different machine — without starting over. See
+`references/migration-history.md` for the protocol. This document (`instructions.md`)
+stays a generic, durable playbook; per-run results live in `migrationHistory.json`, not
+here.
+
 ## Auto-approved commands (read-only — don't stop to confirm these)
 
 ```bash
@@ -46,8 +59,10 @@ Corresponds to `PLAN.md`. Nothing in this stage mutates the codebase.
 ## Phase 0 — Baseline
 
 **Entry:** on `react@18.3.0`. **Exit:** a known-good baseline recorded before anything
-changes.
+changes, and a migration scope decided.
 
+- [ ] Determine migration scope (whole `src/` tree, or specific folders/files) and
+      record it — see `PLAN.md` Phase 0.
 - [ ] Working tree is clean and on a dedicated branch (`upgrade/react-19`) — the
       official codemods require a git repo to run safely.
 - [ ] CI is green on `main` before you start.
@@ -84,7 +99,7 @@ npm view <package>@latest peerDependencies
 | Package | Role | What to check |
 |---|---|---|
 | `react-router-dom` | routing | Peer range covering React 19; the newer unified `react-router` package (v8+) is a separate, optional concern. |
-| `react-bootstrap` | UI kit | Older majors called `ReactDOM.findDOMNode` internally in `Modal`/`OverlayTrigger`/`Transition` — confirm the installed version has removed that. |
+| `react-bootstrap` | UI kit | Older majors called `ReactDOM.findDOMNode` internally in `Modal`/`OverlayTrigger`/`Transition` — confirm the installed version has removed that, or that this app doesn't use those specific sub-components. |
 | `ag-grid-community` / `ag-grid-react` | data grid | The single most common install-time failure when upgrading React — older majors cap their peer range at `^18.0.0`, which hard-fails `npm install` with `ERESOLVE` the moment React is bumped. |
 | `zustand` | state | Peer range covering React 19. |
 | `@tanstack/react-query` | data fetching | Peer range covering React 19. |
@@ -100,8 +115,8 @@ Classify each dependency:
 | ⚪ **Unknown** | No `peerDependencies` declared at all | Check the README/CHANGELOG or grep its installed source for removed APIs; treat as 🔴 if you can't confirm. |
 
 Produce a live table (package / installed version / installed peer range /
-classification / minimum version that flips it to ✅ or 🟡) — this becomes the record
-for this run.
+classification / minimum version that flips it to ✅ or 🟡) and record it in
+`migrationHistory.json`'s `findings.dependencyClassification` — not in this file.
 
 ## Phase 2 — TypeScript compatibility check
 
@@ -151,7 +166,8 @@ Corresponds to `IMPLEMENT.md`. Consumes Stage 1's outputs.
 
 ## Phase 4 — Mechanical codemods
 
-Run on the branch from Phase 0 (required — codemods commit as they go):
+Run on the branch from Phase 0 (required — codemods commit as they go), against the
+scope decided in Phase 0:
 
 ```bash
 npx codemod run react-19-migration-recipe --target ./src --no-interactive
@@ -159,17 +175,22 @@ npx types-react-codemod@latest preset-19 ./src --yes
 ```
 
 Individual codemods exist for changes the bundled recipe doesn't cover (see
-`references/breaking-changes.md` for the full list) — `defaultProps` removal and legacy
-Context removal are common examples that need a separate, targeted codemod run.
+`references/breaking-changes.md` for the full list) — `defaultProps` removal,
+`forwardRef` removal, and legacy Context removal are common examples that need a
+separate, targeted codemod run.
 
 **Review every file every codemod touches — don't trust a clean exit code.** Codemods
 can produce output that's syntactically broken (a dropped brace, a merged statement) or
-subtly wrong (a resource-cleanup closure referencing the wrong instance) even when they
-report success. They also don't catch everything: an inline `ref={(node) => ...}`
-callback in JSX is a different pattern from the same logic assigned to a named `const`
-first, and only one of those is reliably rewritten by the standard ref-callback codemod.
-`findDOMNode` has no automated replacement at all — it's always a manual fix, tailored
-to whatever DOM node the code actually needs.
+subtly wrong (a resource-cleanup closure referencing the wrong instance, a mistyped ref
+prop with a missing import) even when they report success. They also don't catch
+everything: an inline `ref={(node) => ...}` callback in JSX is a different pattern from
+the same logic assigned to a named `const` first, and only one of those is reliably
+rewritten by the standard ref-callback codemod. `findDOMNode` has no automated
+replacement at all — it's always a manual fix, tailored to whatever DOM node the code
+actually needs. Legacy Context removal codemods can also simply not match a given
+`getChildContext`/`childContextTypes` shape and make zero changes — verify with the
+grep sweep (Phase 5) that a "0 files modified" result was actually correct rather than
+a miss.
 
 ## Phase 5 — Grep sweep for what codemods can't catch
 
@@ -194,6 +215,8 @@ npm install --save-exact react@19.2.7 react-dom@19.2.7
 npm install --save-exact -D @types/react@^19 @types/react-dom@^19
 ```
 
+This step always applies to the whole repo, regardless of any scope chosen in Phase 0.
+
 Fix TypeScript compile errors before moving on — `useRef()` requiring an initial value,
 ref callback implicit returns, JSX namespace scoping, `useReducer` type params (see
 `references/breaking-changes.md`). Don't proceed to Phase 7 with a red `tsc` build; a
@@ -202,8 +225,8 @@ chasing the wrong cause.
 
 ## Phase 7 — Per-component fix-and-verify loop
 
-For every component with a test file, run that test in isolation, and touch the
-component file **only if its own test fails**:
+For every component **within the chosen scope** that has a test file, run that test in
+isolation, and touch the component file **only if its own test fails**:
 
 ```bash
 npx vitest run <path-to-Component.test.tsx>
@@ -249,21 +272,27 @@ unprompted.
    `onCaughtError`/`onUncaughtError`/`onRecoverableError`; if it already reports errors
    itself independent of that behavior, no change is needed — verify by reading the
    code, don't assume either way.
-2. `npm test` — zero `act()`-related console errors.
+2. `npm test` — the **whole suite**, not just the scoped folders (zero `act()`-related
+   console errors). React itself changed for the entire app regardless of scope.
 3. Manual QA pass in the running app, under `<StrictMode>`, exercising every area
-   touched by a Phase 6 dependency upgrade and every component fixed in Phase 4–7 that
-   had no test coverage.
+   touched by a Phase 6 dependency upgrade — including areas outside the migration
+   scope, since they now run on React 19 too. If something out-of-scope actually
+   breaks, that's a shipping blocker for this run, not a footnote — escalate to the
+   user rather than silently patching or silently shipping it.
 4. `npm run build` — completes cleanly, no unexpected bundle-size jump.
 5. `npm audit` once more — confirm the vulnerability delta matches the Phase 3 baseline.
 
 ## Phase 10 — Deliverable
 
-Keep this document current after each run: the dependency compatibility matrix (Phase
-1), the TypeScript floor finding (Phase 2), and the known-gotchas/rollback sections
-below are durable and worth maintaining. Avoid baking a specific run's blow-by-blow
-findings (which files needed fixing, what a codemod got wrong on a given day) into this
-file — that kind of detail belongs in the PR description or commit history for that
-run, not in the standing playbook.
+Keep this document current after each run in a **generic** way: the dependency-role
+table (Phase 1), the TypeScript-floor check method (Phase 2), and the
+known-gotchas/rollback sections below are durable and worth maintaining as the stack
+evolves. **Do not** add dated "result of the last run" sections, per-component result
+tables, status banners, or checked-off checklists here — that's exactly the kind of
+run-specific detail that belongs in `migrationHistory.json` (machine-readable,
+resumable) or a PR description/commit message (human narrative), not in this standing
+playbook. A future reader opening this file should see a reusable procedure, not a
+transcript of one past execution.
 
 ## Known gotchas specific to this stack
 
@@ -276,8 +305,10 @@ run, not in the standing playbook.
   into hidden Activity mode can destroy the grid's internal state even though the
   component doesn't fully unmount.
 - **react-bootstrap Transition-based components**: `Modal`, `OverlayTrigger`, `Fade`,
-  and `Collapse` all previously relied on `findDOMNode` under the hood. An old cached
-  version can silently reappear via a lockfile that wasn't regenerated.
+  and `Collapse` all previously relied on `findDOMNode` under the hood (some versions
+  still keep a fallback path for class-component refs). An old cached version can
+  silently reappear via a lockfile that wasn't regenerated — check which of these
+  sub-components the app actually uses before assuming the risk applies.
 - **react-router-dom stays as-is**: don't feel pressured to jump to the newer unified
   `react-router` package as part of this migration — separate concern.
 - **Codemod CLI syntax**: `npx codemod run <package-name> --target <path>
@@ -290,7 +321,8 @@ run, not in the standing playbook.
 - **Codemods aren't infallible**: review every file they touch. They can produce
   output that's syntactically broken or subtly behavior-changing even when they report
   success, and they don't cover every syntactic variant of a pattern (e.g. an inline
-  JSX ref callback vs. the same logic assigned to a named variable first).
+  JSX ref callback vs. the same logic assigned to a named variable first, or a
+  `forwardRef`-removal codemod mistyping the new plain `ref` prop).
 
 ## Rollback plan
 

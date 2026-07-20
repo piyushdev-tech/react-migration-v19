@@ -39,6 +39,15 @@ wraps this entire skill plus the checkpoint protocol into a single delegatable u
 use it (or its instructions as a model) when you want the whole plan-and-implement
 workflow driven end to end, including automatic resumption.
 
+## Migration scope: whole repo, or specific folders
+
+By default this migrates the whole source tree. The user can instead ask to scope it to
+specific folders/files (e.g. "just migrate `src/checkout` for now"). `PLAN.md` Phase 0
+is where this gets decided and recorded — see `references/migration-history.md`'s
+"Migration scope" section for the full protocol, and the one thing scope can *not*
+change: the React version bump itself (`IMPLEMENT.md` Phase 6) always applies to the
+whole repo, since a single app can't run two React majors at once.
+
 ## Two stages, two files — load only the one you need
 
 The phases are split across two files under this skill's directory so you don't pay to

@@ -45,6 +45,54 @@ notes. Specifically:
   18.3.0) — treat that exactly like the `node_modules`/lockfile drift Phase 0 already
   watches for, and fix the discrepancy before continuing.
 
+## Migration scope
+
+By default this migration touches the whole source tree (`src/`, or the project's
+equivalent). The user can instead scope it to specific folders/files — e.g. "just
+migrate `src/components/checkout` for now, leave the rest for later." Scope is decided
+**once, up front, and recorded** in `migrationHistory.json`'s `scope` field so it never
+needs re-asking on resume.
+
+**Critical distinction — scope does not apply uniformly across phases:**
+
+- Phases 4, 5, 7, and 8 (codemods, grep sweep, per-component loop, business-logic-freeze
+  diff) run **only against the chosen scope** — that's the whole point of scoping, and
+  it's what keeps a partial migration's diff small and reviewable.
+- Phase 6's dependency bump (`react`/`react-dom` and their `@types`) is **always
+  whole-repo**. There is no such thing as "React 19 in this folder, React 18 in that
+  one" — the runtime is shared across the entire app. Scoping which files get
+  *proactively fixed* does not scope which files are *exposed* to the new React
+  version. Anything outside the chosen scope that has a real React 19 breaking pattern
+  will still hit it at compile time or runtime once Phase 6 runs — scoping just means
+  you're choosing to deal with that later rather than now.
+- Because of that, **always tell the user explicitly** (and record in the deliverable)
+  which folders were left out of scope, so "we migrated the checkout folder" doesn't
+  get misread as "the checkout folder is the only place that could break."
+
+**Determining scope:** ask the user directly if this is an interactive session and no
+scope has been specified yet — "migrate everything under `src/`, or just specific
+folders?" If this is running non-interactively (e.g. a background agent invocation with
+no way to block on a live answer) and no scope was given in the task itself, default to
+the whole source tree and say so plainly in the final report, rather than guessing at a
+narrower scope nobody asked for.
+
+Schema:
+
+```json
+"scope": { "mode": "all", "paths": ["src"] }
+```
+
+or, for a narrowed run:
+
+```json
+"scope": { "mode": "custom", "paths": ["src/components/checkout", "src/hooks/useCart.ts"] }
+```
+
+`mode` is `"all"` or `"custom"`; `paths` is a list of repo-relative folders/files. When
+`mode` is `"custom"`, every codemod/grep/diff command in `IMPLEMENT.md` runs once per
+entry in `paths` (or against a combined glob, whichever the tool being invoked
+supports) instead of against `src/` wholesale.
+
 ## When to write it
 
 Update the file after **every phase's exit condition goes green** — not just at the
@@ -73,6 +121,7 @@ structured JSON and a partial edit risks producing invalid JSON.
   "status": "in_progress",
   "createdAt": "2026-07-16T02:00:00Z",
   "lastUpdatedAt": "2026-07-16T02:35:00Z",
+  "scope": { "mode": "all", "paths": ["src"] },
   "currentPhase": 4,
   "phases": [
     { "id": 0, "name": "Baseline", "stage": "plan", "status": "complete", "completedAt": "2026-07-16T02:05:00Z", "summary": "one or two lines, not a full transcript" },
@@ -104,6 +153,9 @@ Field notes:
 
 - `status` (top-level): `"not_started"` (file just created) | `"in_progress"` |
   `"blocked"` | `"complete"`.
+- `scope`: decided once at Phase 0 and never re-asked on resume — see "Migration
+  scope" above. Remember Phase 6 (the React version bump) ignores this and always
+  applies repo-wide.
 - `phases[].status`: `"pending"` | `"in_progress"` | `"complete"` | `"blocked"`.
   Treat `"in_progress"` the same as `"pending"` when deciding where to resume — restart
   that phase from its own beginning rather than trying to reconstruct partial state

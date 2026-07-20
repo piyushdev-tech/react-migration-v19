@@ -21,8 +21,19 @@ it safe to hand the migration off mid-flight.
 ## Phase 0 — Baseline
 
 **Entry:** repo is on React 18.x. **Exit:** you have a clean, reproducible baseline to
-diff against.
+diff against, and a migration scope is recorded.
 
+- **Determine migration scope.** If `migrationHistory.json` already has a `scope`
+  recorded, use it — don't re-ask. Otherwise: if this is an interactive session, ask
+  the user whether to migrate the whole source tree (default) or scope this run to
+  specific folders/files; if there's no way to get a live answer (e.g. a
+  non-interactive background invocation with no scope given), default to the whole
+  source tree and say so plainly in your final report. Record the decision in
+  `migrationHistory.json`'s `scope` field (see `references/migration-history.md`) —
+  once written, treat it as fixed for the rest of this run. **Note the one thing scope
+  never changes:** Phase 6's React version bump is always repo-wide; scoping only
+  controls which files Phases 4/5/7/8 proactively fix. Tell the user which folders are
+  being left unfixed, if any, so it's not mistaken for "those folders are unaffected."
 - Confirm a dedicated git branch exists (codemods commit as they go — never run them on
   `main`/`master` or a dirty tree).
 - Confirm CI/main is green before you start.
@@ -63,8 +74,10 @@ Classify each dependency:
 | ⚪ **Unknown** | Package declares no `peerDependencies` at all (some don't) | Don't assume safety. Check its README/CHANGELOG for an explicit React 19 statement, or grep its installed source for APIs removed in React 19 (`findDOMNode`, string refs, legacy Context). Downgrade to 🔴 treatment if you can't confirm it. |
 
 Produce a table (package / current version / installed peer range / classification /
-minimum version that flips it to ✅ or 🟡) — this becomes §2 of the project's
-`instructions.md`, and is a required input to `IMPLEMENT.md`.
+minimum version that flips it to ✅ or 🟡) — record it in `migrationHistory.json`'s
+`findings.dependencyClassification` (this run's actual result), not in `instructions.md`
+(which stays a generic, durable playbook — see `IMPLEMENT.md` Phase 10). It's a required
+input to `IMPLEMENT.md` either way.
 
 ## Phase 2 — TypeScript compatibility check (skip if the project has no TypeScript)
 
