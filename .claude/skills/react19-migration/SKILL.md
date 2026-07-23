@@ -111,9 +111,11 @@ files, `git commit`). Those still deserve normal care — but don't let a depend
 
 - `PLAN.md` — Phases 0–3, read first, always.
 - `IMPLEMENT.md` — Phases 4–10, read once `PLAN.md` is green.
-- `references/breaking-changes.md` — the exhaustive, categorized list of React 19
-  breaking changes (removed APIs, changed behavior, TypeScript changes) with exact
-  codemod commands for each, plus known ecosystem-wide gotchas (ag-grid, Bootstrap-style
-  UI kits, testing-library) that recur across projects regardless of stack. Load this
+- `references/breaking-changes.md` — the categorized list of React 19 breaking changes
+  (removed APIs, changed behavior, soft deprecations, TypeScript changes) with exact
+  codemod commands where one exists, plus known ecosystem-wide gotchas (ag-grid,
+  Bootstrap-style UI kits, testing-library) that recur across projects regardless of
+  stack. Covers everything a typical app is likely to hit; a few obscure internal-API
+  removals are intentionally thin on detail since they're rarely relevant. Load this
   when you need the precise mechanism behind a specific error message, or the exact
   codemod command for a change not covered in `IMPLEMENT.md`.
