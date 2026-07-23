@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "migration": {
+    "from": "18.3.0",
+    "to": "19.2.7"
+  },
+  "branch": "upgrade/react-19",
+  "status": "not_started",
+  "createdAt": "2026-07-16T02:45:00Z",
+  "lastUpdatedAt": "2026-07-16T02:45:00Z",
+  "currentPhase": 0,
+  "phases": [
+    { "id": 0, "name": "Baseline", "stage": "plan", "status": "pending" },
+    { "id": 1, "name": "Live peer-dependency matrix", "stage": "plan", "status": "pending" },
+    { "id": 2, "name": "TypeScript compatibility check", "stage": "plan", "status": "pending" },
+    { "id": 3, "name": "Vulnerability & version-stability policy", "stage": "plan", "status": "pending" },
+    { "id": 4, "name": "Grep sweep + manual fixes for removed APIs", "stage": "implement", "status": "pending" },
+    { "id": 5, "name": "TypeScript-specific fixes", "stage": "implement", "status": "pending" },
+    { "id": 6, "name": "Upgrade dependencies + bump React", "stage": "implement", "status": "pending" },
+    { "id": 7, "name": "Per-component fix-and-verify loop", "stage": "implement", "status": "pending" },
+    { "id": 8, "name": "Business-logic freeze review", "stage": "implement", "status": "pending" },
+    { "id": 9, "name": "Full verification", "stage": "implement", "status": "pending" },
+    { "id": 10, "name": "Deliverable", "stage": "implement", "status": "pending" }
+  ],
+  "findings": {
+    "dependencyClassification": [],
+    "typeScriptFloor": null,
+    "chosenReactVersion": null,
+    "vulnerabilityBaseline": null
+  },
+  "blockers": [],
+  "resumeInstructions": "No migration run has been checkpointed yet — start at Phase 0 (PLAN.md). package.json currently shows react@18.3.0 / @types/react@18.3.9 (consistent, no known drift as of this update) — still re-verify live via npm ls react react-dom before trusting it, per Phase 0's own instruction. Phases 4-5 were renamed and both are now fully manual (no automated rewrite tool is used anywhere in this workflow) — re-read IMPLEMENT.md Phase 4/5 even if resuming from an older mental model of this workflow."
+}
