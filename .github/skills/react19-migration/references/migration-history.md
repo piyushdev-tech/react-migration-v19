@@ -24,9 +24,9 @@ At the very start of any invocation of this skill — before Phase 0 — check w
 
 ## Trusting recorded findings vs. re-verifying
 
-Phases are written to be idempotent and cheap to re-run (codemods report 0
-modifications if already applied; `npm view`/`npm audit` are read-only), so when in
-doubt, prefer re-running a phase over trying to reconstruct partial progress from
+Phases are written to be idempotent and cheap to re-run (a grep sweep finds nothing if
+a fix is already applied; `npm view`/`npm audit` are read-only), so when in doubt,
+prefer re-running a phase over trying to reconstruct partial progress from
 notes. Specifically:
 
 - **Resuming mid-Stage-2** (some Phase 4+ already complete): trust Stage 1's recorded
@@ -55,9 +55,10 @@ needs re-asking on resume.
 
 **Critical distinction — scope does not apply uniformly across phases:**
 
-- Phases 4, 5, 7, and 8 (codemods, grep sweep, per-component loop, business-logic-freeze
-  diff) run **only against the chosen scope** — that's the whole point of scoping, and
-  it's what keeps a partial migration's diff small and reviewable.
+- Phases 4, 5, 7, and 8 (grep sweep + manual removed-API fixes, TypeScript-specific
+  fixes, per-component loop, business-logic-freeze diff) run **only against the chosen
+  scope** — that's the whole point of scoping, and it's what keeps a partial
+  migration's diff small and reviewable.
 - Phase 6's dependency bump (`react`/`react-dom` and their `@types`) is **always
   whole-repo**. There is no such thing as "React 19 in this folder, React 18 in that
   one" — the runtime is shared across the entire app. Scoping which files get
@@ -89,9 +90,9 @@ or, for a narrowed run:
 ```
 
 `mode` is `"all"` or `"custom"`; `paths` is a list of repo-relative folders/files. When
-`mode` is `"custom"`, every codemod/grep/diff command in `IMPLEMENT.md` runs once per
-entry in `paths` (or against a combined glob, whichever the tool being invoked
-supports) instead of against `src/` wholesale.
+`mode` is `"custom"`, every grep/diff command in `IMPLEMENT.md` runs once per entry in
+`paths` (or against a combined glob, whichever the tool being invoked supports) instead
+of against `src/` wholesale.
 
 ## When to write it
 
@@ -128,8 +129,8 @@ structured JSON and a partial edit risks producing invalid JSON.
     { "id": 1, "name": "Live peer-dependency matrix", "stage": "plan", "status": "pending" },
     { "id": 2, "name": "TypeScript compatibility check", "stage": "plan", "status": "pending" },
     { "id": 3, "name": "Vulnerability & version-stability policy", "stage": "plan", "status": "pending" },
-    { "id": 4, "name": "Mechanical codemods", "stage": "implement", "status": "pending" },
-    { "id": 5, "name": "Grep sweep", "stage": "implement", "status": "pending" },
+    { "id": 4, "name": "Grep sweep + manual fixes for removed APIs", "stage": "implement", "status": "pending" },
+    { "id": 5, "name": "TypeScript-specific fixes", "stage": "implement", "status": "pending" },
     { "id": 6, "name": "Upgrade dependencies + bump React", "stage": "implement", "status": "pending" },
     { "id": 7, "name": "Per-component fix-and-verify loop", "stage": "implement", "status": "pending" },
     { "id": 8, "name": "Business-logic freeze review", "stage": "implement", "status": "pending" },
@@ -145,7 +146,7 @@ structured JSON and a partial edit risks producing invalid JSON.
     "vulnerabilityBaseline": { "moderate": 3, "high": 1, "critical": 1, "relatedToReact": false, "deferred": true }
   },
   "blockers": [],
-  "resumeInstructions": "Phases 0-3 complete. Resume at Phase 4 (IMPLEMENT.md) — codemods have not yet been run."
+  "resumeInstructions": "Phases 0-3 complete. Resume at Phase 4 (IMPLEMENT.md) — the grep sweep and manual removed-API fixes have not yet been done."
 }
 ```
 

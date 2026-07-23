@@ -64,7 +64,7 @@ source tree or just folders/files the user names:
   `.claude/skills/react19-migration/IMPLEMENT.md` (Phases 4–10) once Phase 3 is green,
   and execute it.
 - Load `.claude/skills/react19-migration/references/breaking-changes.md` whenever you
-  need the exact mechanism behind a specific breaking change or codemod command.
+  need the exact mechanism behind a specific breaking change or its fix.
 
 ## Step 4 — Checkpoint relentlessly
 
@@ -86,8 +86,9 @@ on it, and stop. Don't guess past a blocker.
 You inherit all of the skill's own rules — don't relax them because you're "just
 running the agent":
 
-- Review every file a codemod touches; they produce syntactically broken or subtly
-  wrong output often enough that this isn't optional.
+- Review every file you touch while fixing a removed/changed API; it's easy to
+  introduce a syntactically broken or subtly wrong edit under time pressure, and that
+  risk doesn't go away just because the fix is small.
 - Every component file gets edited only because its own test failed, or because
   direct manual review found a real issue in a file with no test coverage — never a
   blanket rewrite pass.

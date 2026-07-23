@@ -58,10 +58,11 @@ load implementation detail when the task only calls for an assessment, or vice v
   in this stage mutates the codebase. **Read this first, always** — it's the entry point
   for every request this skill handles, including "is it safe to upgrade" /
   "what would break" questions that never intend to touch code.
-- **`IMPLEMENT.md` — Phases 4–10 (execution).** Codemods, dependency + React installs,
-  per-component fixes, the business-logic-freeze review, full verification, and the
-  deliverable. **Only read this once `PLAN.md`'s Phase 3 exit is green** — its steps
-  consume Phase 1–3's outputs (the classification table, the TypeScript floor finding,
+- **`IMPLEMENT.md` — Phases 4–10 (execution).** Manual removed-API and TypeScript
+  fixes, dependency + React installs, per-component fixes, the business-logic-freeze
+  review, full verification, and the deliverable. **Only read this once `PLAN.md`'s
+  Phase 3 exit is green** — its steps consume Phase 1–3's outputs (the classification
+  table, the TypeScript floor finding,
   chosen target versions) and assume they already exist.
 
 If the user's request clearly wants the full migration performed, you'll end up reading
@@ -92,9 +93,9 @@ grep -rn "<pattern>" src/            # source search
 ```
 
 Only pause for explicit confirmation before commands that **mutate** the working tree
-or install/replace packages (`npm install`, `npm audit fix`, the codemods, editing
-files, `git commit`). Those still deserve normal care — but don't let a dependency
-*check* wait on the same approval as a dependency *change*.
+or install/replace packages (`npm install`, `npm audit fix`, editing files,
+`git commit`). Those still deserve normal care — but don't let a dependency *check*
+wait on the same approval as a dependency *change*.
 
 ## What NOT to do (applies across both stages)
 
@@ -112,10 +113,10 @@ files, `git commit`). Those still deserve normal care — but don't let a depend
 - `PLAN.md` — Phases 0–3, read first, always.
 - `IMPLEMENT.md` — Phases 4–10, read once `PLAN.md` is green.
 - `references/breaking-changes.md` — the categorized list of React 19 breaking changes
-  (removed APIs, changed behavior, soft deprecations, TypeScript changes) with exact
-  codemod commands where one exists, plus known ecosystem-wide gotchas (ag-grid,
-  Bootstrap-style UI kits, testing-library) that recur across projects regardless of
-  stack. Covers everything a typical app is likely to hit; a few obscure internal-API
-  removals are intentionally thin on detail since they're rarely relevant. Load this
-  when you need the precise mechanism behind a specific error message, or the exact
-  codemod command for a change not covered in `IMPLEMENT.md`.
+  (removed APIs, changed behavior, soft deprecations, TypeScript changes) and their
+  exact manual fix, plus known ecosystem-wide gotchas (ag-grid, Bootstrap-style UI
+  kits, testing-library) that recur across projects regardless of stack. Covers
+  everything a typical app is likely to hit; a few obscure internal-API removals are
+  intentionally thin on detail since they're rarely relevant. Load this when you need
+  the precise mechanism behind a specific error message, or the exact fix for a change
+  not covered in `IMPLEMENT.md`.

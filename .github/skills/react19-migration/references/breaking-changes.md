@@ -13,6 +13,13 @@ Codemods are published to the codemod.com registry and invoked as
 Package names change occasionally; if a command below 404s, re-verify with
 `npx codemod search react-19` before assuming the change has no codemod.
 
+**This skill's actual workflow (`IMPLEMENT.md` Phase 4) does not depend on these
+commands succeeding** — codemod.com is a separate registry from npm's own, and it's a
+realistic possibility that a corporate/CI network blocks it even when the standard npm
+registry is otherwise reachable. Treat the "Codemod" column below as an optional
+accelerant if you happen to have access, not a requirement; the "Replacement" column is
+what Phase 4 actually applies by hand either way.
+
 | Removed | Replacement | Codemod |
 |---|---|---|
 | `ReactDOM.render(el, container)` | `createRoot(container).render(el)` | `npx codemod run react-19-replace-reactdom-render --target <path> --no-interactive` |

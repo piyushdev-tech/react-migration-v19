@@ -34,8 +34,9 @@ diff against, and a migration scope is recorded.
   never changes:** Phase 6's React version bump is always repo-wide; scoping only
   controls which files Phases 4/5/7/8 proactively fix. Tell the user which folders are
   being left unfixed, if any, so it's not mistaken for "those folders are unaffected."
-- Confirm a dedicated git branch exists (codemods commit as they go — never run them on
-  `main`/`master` or a dirty tree).
+- Confirm a dedicated git branch exists — never make the Phase 4–7 fixes directly on
+  `main`/`master` or against a dirty tree, so each phase's changes stay independently
+  revertable.
 - Confirm CI/main is green before you start.
 - If not already on the latest `react@18.3.x` patch, upgrade to it first — it's
   functionally identical to 18.2 but adds console warnings for everything that breaks in

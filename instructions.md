@@ -63,8 +63,9 @@ changes, and a migration scope decided.
 
 - [ ] Determine migration scope (whole `src/` tree, or specific folders/files) and
       record it — see `PLAN.md` Phase 0.
-- [ ] Working tree is clean and on a dedicated branch (`upgrade/react-19`) — the
-      official codemods require a git repo to run safely.
+- [ ] Working tree is clean and on a dedicated branch (`upgrade/react-19`) — never make
+      the Phase 4–7 fixes directly on `main`/`master` or against a dirty tree, so each
+      phase's changes stay independently revertable.
 - [ ] CI is green on `main` before you start.
 - [ ] `npm test` and `npm run build` both pass on 18.3.0 right now. Before trusting the
       result, confirm there's no drift to resolve first:
@@ -164,46 +165,50 @@ known, and target versions are chosen with no new unresolved vulnerabilities.
 
 Corresponds to `IMPLEMENT.md`. Consumes Stage 1's outputs.
 
-## Phase 4 — Mechanical codemods
+## Phase 4 — Grep sweep + manual fixes for removed APIs
 
-Run on the branch from Phase 0 (required — codemods commit as they go), against the
-scope decided in Phase 0:
-
-```bash
-npx codemod run react-19-migration-recipe --target ./src --no-interactive
-npx types-react-codemod@latest preset-19 ./src --yes
-```
-
-Individual codemods exist for changes the bundled recipe doesn't cover (see
-`references/breaking-changes.md` for the full list) — `defaultProps` removal,
-`forwardRef` removal, and legacy Context removal are common examples that need a
-separate, targeted codemod run.
-
-**Review every file every codemod touches — don't trust a clean exit code.** Codemods
-can produce output that's syntactically broken (a dropped brace, a merged statement) or
-subtly wrong (a resource-cleanup closure referencing the wrong instance, a mistyped ref
-prop with a missing import) even when they report success. They also don't catch
-everything: an inline `ref={(node) => ...}` callback in JSX is a different pattern from
-the same logic assigned to a named `const` first, and only one of those is reliably
-rewritten by the standard ref-callback codemod. `findDOMNode` has no automated
-replacement at all — it's always a manual fix, tailored to whatever DOM node the code
-actually needs. Legacy Context removal codemods can also simply not match a given
-`getChildContext`/`childContextTypes` shape and make zero changes — verify with the
-grep sweep (Phase 5) that a "0 files modified" result was actually correct rather than
-a miss.
-
-## Phase 5 — Grep sweep for what codemods can't catch
+Every removed-API fix in this workflow is applied by hand — no automated rewrite tool
+is used or depended on. Work on the branch from Phase 0 (still required — commit as
+you go), against the scope decided in Phase 0:
 
 ```bash
-grep -rn "contextTypes\|getChildContext" src/       # legacy Context API
-grep -rn "\.defaultProps" src/                       # removed for function components
-grep -rn "SECRET_INTERNALS" src/                     # renamed in React 19
-grep -rln "findDOMNode" src/                         # removed entirely, throws now
+grep -rn "contextTypes\|getChildContext" src/                # legacy Context API
+grep -rn "\.defaultProps" src/                                # removed for function components
+grep -rn "SECRET_INTERNALS" src/                              # renamed in React 19
+grep -rln "findDOMNode" src/                                  # removed entirely, throws now
+grep -rln "ReactDOM\.render\|ReactDOM\.hydrate\|unmountComponentAtNode" src/
+grep -rln "react-dom/test-utils" src/                         # only `act` survives; everything else removed
+grep -rn 'ref="' src/                                         # string refs, removed
+grep -rln "createFactory\|useFormState" src/
 ```
+
+For every hit: look up the exact replacement in `references/breaking-changes.md`'s
+Removed APIs table and apply it by hand — `ReactDOM.render`/`hydrate` becomes
+`createRoot(...).render(...)`/`hydrateRoot(...)`, a string ref becomes a callback ref or
+`useRef`, `defaultProps` becomes an ES6 default parameter with the *identical* default
+value, legacy Context becomes `createContext`/`useContext`/`contextType`, and so on.
+Every fix should be explainable purely as a React-19 API-shape change — see Phase 8.
 
 Every hit gets fixed or consciously triaged before moving on. A hit inside a comment
 (explaining what used to be there, or referencing this very playbook) doesn't count —
 only hits in actual code matter.
+
+## Phase 5 — TypeScript-specific fixes
+
+Applied by hand, the same way as Phase 4 — walk `references/breaking-changes.md`'s
+TypeScript-only changes section and fix each pattern found:
+
+```bash
+grep -rn "useRef<[^>]*>()" src/                               # useRef() now requires an argument
+grep -rn "ref={.*=>.*=.*}" src/                                # ref callbacks with an implicit return
+grep -rn "React\.Reducer<\|useReducer<React" src/             # old single-type-parameter useReducer usage
+grep -rln "declare global" src/                                # check for bare `namespace JSX` augmentations
+```
+
+None of these greps are perfectly precise — treat hits as candidates to inspect, not a
+final list, and cross-check against a red `npx tsc -b` for anything the greps miss.
+Every fix here should be explainable purely as a React-19 API-shape change — see
+Phase 8.
 
 ## Phase 6 — Upgrade flagged dependencies, then React itself
 
@@ -311,18 +316,9 @@ transcript of one past execution.
   sub-components the app actually uses before assuming the risk applies.
 - **react-router-dom stays as-is**: don't feel pressured to jump to the newer unified
   `react-router` package as part of this migration — separate concern.
-- **Codemod CLI syntax**: `npx codemod run <package-name> --target <path>
-  --no-interactive` (not `npx codemod <package-name>` — the older path-style invocation
-  no longer resolves). Re-verify package names with `npx codemod search react-19` if a
-  command 404s — the registry changes.
 - **`node_modules`/lockfile/`package.json` drift**: always confirm `npm ls react
   react-dom` shows no `invalid` entries, and that `package.json`'s own dependency groups
   agree with each other, before trusting a baseline (see Phase 0).
-- **Codemods aren't infallible**: review every file they touch. They can produce
-  output that's syntactically broken or subtly behavior-changing even when they report
-  success, and they don't cover every syntactic variant of a pattern (e.g. an inline
-  JSX ref callback vs. the same logic assigned to a named variable first, or a
-  `forwardRef`-removal codemod mistyping the new plain `ref` prop).
 
 ## Rollback plan
 
@@ -332,8 +328,9 @@ transcript of one past execution.
    `react`/`react-dom`/`@types/react*` bump commit — check whether the Phase 4–7
    source-level fixes are backward-compatible with React 18 as written before assuming
    a clean revert of everything else.
-3. Keep commits scoped per phase (codemods → dependency bumps → React version bump →
-   per-component fixes) so any of these can be reverted independently.
+3. Keep commits scoped per phase (removed-API fixes → TypeScript fixes → dependency
+   bumps → React version bump → per-component fixes) so any of these can be reverted
+   independently.
 4. Deferred vulnerability fixes (Phase 3) are an explicitly separate follow-up — don't
    bundle them into a rollback or a retry of this migration.
 

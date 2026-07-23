@@ -58,7 +58,7 @@ load implementation detail when the task only calls for an assessment, or vice v
   in this stage mutates the codebase. **Read this first, always** — it's the entry point
   for every request this skill handles, including "is it safe to upgrade" /
   "what would break" questions that never intend to touch code.
-- **`IMPLEMENT.md` — Phases 4–10 (execution).** Codemods, dependency + React installs,
+- **`IMPLEMENT.md` — Phases 4–10 (execution).** dependency + React installs,
   per-component fixes, the business-logic-freeze review, full verification, and the
   deliverable. **Only read this once `PLAN.md`'s Phase 3 exit is green** — its steps
   consume Phase 1–3's outputs (the classification table, the TypeScript floor finding,

@@ -23,42 +23,61 @@ exception** — the React version bump always applies to the whole repo regardle
 scope, and Phase 9's full-suite verification runs against the whole app, not just the
 scoped folders, since the runtime is shared either way.
 
-## Phase 4 — Mechanical codemods
+## Phase 4 — Grep sweep + manual fixes for removed APIs
 
-**Entry:** `PLAN.md` Phases 1–3 are documented. **Exit:** codemods have run and every
-touched file has been reviewed.
+**Entry:** `PLAN.md` Phases 1–3 are documented. **Exit:** every hit below is fixed or
+consciously triaged (e.g. it's inside a third-party package, not app source), with each
+fix matching the exact replacement `references/breaking-changes.md` documents.
 
-Run the official codemods before any manual edits, on the branch from Phase 0 (required
-— they commit as they go):
-
-```bash
-# Package is "react-19-migration-recipe" (verify with `npx codemod search react` — the
-# registry and CLI syntax have changed before). --no-interactive is required outside a TTY.
-# Replace ./src with the recorded scope path(s) if scope.mode is "custom".
-npx codemod run react-19-migration-recipe --target ./src --no-interactive
-
-# --yes auto-accepts all transforms in the picker; required outside a TTY.
-npx types-react-codemod@latest preset-19 ./src --yes
-```
-
-Individual codemods exist if only one change is needed — see
-`references/breaking-changes.md` for the full list with exact commands. Review every
-file the codemods touch; they're reliable but not infallible, particularly around ref
-callbacks. Every codemod-produced hunk should be explainable purely as a React-19
-API-shape change — see Phase 8's business-logic-freeze rule, which applies from this
-phase onward.
-
-## Phase 5 — Grep sweep for what codemods can't catch (validation-only)
-
-**Entry:** Phase 4 exit is green. **Exit:** every hit below is either fixed or
-consciously triaged (e.g. it's inside a third-party package, not app source).
+Every removed-API fix in this workflow is applied by hand — no automated rewrite tool
+is used or depended on, so there's no third-party registry availability to worry about.
+Work on the branch from Phase 0 (still required — commit as you go so each fix is
+independently revertable):
 
 ```bash
-grep -rn "contextTypes\|getChildContext" <src>      # legacy Context API, removed
-grep -rn "\.defaultProps" <src>                      # removed for function components
-grep -rn "SECRET_INTERNALS" <src>                    # renamed in React 19
-grep -rln "findDOMNode" <src>                        # removed entirely, throws now
+grep -rn "contextTypes\|getChildContext" <src>              # legacy Context API, removed
+grep -rn "\.defaultProps" <src>                              # removed for function components
+grep -rn "SECRET_INTERNALS" <src>                            # renamed in React 19
+grep -rln "findDOMNode" <src>                                # removed entirely, throws now
+grep -rln "ReactDOM\.render\|ReactDOM\.hydrate\|unmountComponentAtNode" <src>
+grep -rln "react-dom/test-utils" <src>                       # only `act` survives; everything else removed
+grep -rn 'ref="' <src>                                       # string refs, removed
+grep -rln "createFactory\|useFormState" <src>
 ```
+
+For every hit: open the file, look up the exact replacement in
+`references/breaking-changes.md`'s Removed APIs table, and apply it there — a
+`ReactDOM.render`/`hydrate` call becomes `createRoot(...).render(...)`/
+`hydrateRoot(...)`, a string ref becomes a callback ref or `useRef`, `defaultProps`
+becomes an ES6 default parameter with the *identical* default value, and so on. A hit
+inside a comment (explaining what used to be there, or referencing this playbook)
+doesn't count — only hits in actual code matter. Every fix should be explainable purely
+as a React-19 API-shape change — see Phase 8's business-logic-freeze rule, which
+applies from this phase onward.
+
+## Phase 5 — TypeScript-specific fixes
+
+**Entry:** Phase 4 exit is green. **Exit:** the TypeScript-only changes in
+`references/breaking-changes.md` are fixed and `npx tsc -b` is clean against the
+*current* React types (before Phase 6 bumps them — this phase only fixes the parts of
+the codebase that are wrong regardless of React version, e.g. `useRef()` with no
+initial value).
+
+Applied by hand, the same way as Phase 4 — walk
+`references/breaking-changes.md`'s TypeScript-only changes section and fix each pattern
+found:
+
+```bash
+grep -rn "useRef<[^>]*>()" <src>                              # useRef() now requires an argument
+grep -rn "ref={.*=>.*=.*}" <src>                              # ref callbacks with an implicit return
+grep -rn "React\.Reducer<\|useReducer<React" <src>            # old single-type-parameter useReducer usage
+grep -rln "declare global" <src>                              # check for bare `namespace JSX` augmentations
+```
+
+None of these greps are perfectly precise (regex over JSX/TS syntax rarely is) — treat
+hits as candidates to inspect, not a final list, and cross-check against a red
+`npx tsc -b` for anything the greps miss. Every fix here should be explainable purely as
+a React-19 API-shape change — see Phase 8.
 
 ## Phase 6 — Upgrade flagged dependencies, then React itself
 
@@ -221,7 +240,7 @@ a PR description), write that directly in your response to them — not into
   Phase 1) has been resolved — this is the most common cause of a broken migration
   attempt.
 - Don't re-decide package versions in Phase 6 — install what `PLAN.md` Phase 3 chose.
-- Don't skip the git-branch requirement before running codemods.
+- Don't skip the git-branch requirement before making Phase 4/5 fixes.
 - Don't edit a component file in Phase 7 unless its own test (or a test that exercises
   it) actually failed — that phase is test-driven on purpose, not a rewrite pass.
 - Don't let a business-logic change ride along with a mechanical migration edit — every

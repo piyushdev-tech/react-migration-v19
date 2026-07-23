@@ -14,8 +14,8 @@
     { "id": 1, "name": "Live peer-dependency matrix", "stage": "plan", "status": "pending" },
     { "id": 2, "name": "TypeScript compatibility check", "stage": "plan", "status": "pending" },
     { "id": 3, "name": "Vulnerability & version-stability policy", "stage": "plan", "status": "pending" },
-    { "id": 4, "name": "Mechanical codemods", "stage": "implement", "status": "pending" },
-    { "id": 5, "name": "Grep sweep", "stage": "implement", "status": "pending" },
+    { "id": 4, "name": "Grep sweep + manual fixes for removed APIs", "stage": "implement", "status": "pending" },
+    { "id": 5, "name": "TypeScript-specific fixes", "stage": "implement", "status": "pending" },
     { "id": 6, "name": "Upgrade dependencies + bump React", "stage": "implement", "status": "pending" },
     { "id": 7, "name": "Per-component fix-and-verify loop", "stage": "implement", "status": "pending" },
     { "id": 8, "name": "Business-logic freeze review", "stage": "implement", "status": "pending" },
@@ -29,5 +29,5 @@
     "vulnerabilityBaseline": null
   },
   "blockers": [],
-  "resumeInstructions": "No migration run has been checkpointed yet — start at Phase 0 (PLAN.md). Note: as of this file's creation, package.json already shows react@19.2.7 / @types/react@19.2.17 while this file says 'not_started' — that's leftover from ad-hoc testing, not a tracked run. Phase 0's baseline check (including its node_modules/package.json drift check) will surface and reconcile this; don't assume either source of truth without re-verifying live."
+  "resumeInstructions": "No migration run has been checkpointed yet — start at Phase 0 (PLAN.md). package.json currently shows react@18.3.0 / @types/react@18.3.9 (consistent, no known drift as of this update) — still re-verify live via npm ls react react-dom before trusting it, per Phase 0's own instruction. Phases 4-5 were renamed and both are now fully manual (no automated rewrite tool is used anywhere in this workflow) — re-read IMPLEMENT.md Phase 4/5 even if resuming from an older mental model of this workflow."
 }
