@@ -1,0 +1,377 @@
+<title>React 18 → 19 Migration — How It Works</title>
+<style>
+  :root {
+    --bg: #12151b;
+    --bg-elevated: #1a1e26;
+    --bg-inset: #0d0f14;
+    --ink: #e9ebee;
+    --ink-dim: #9aa3b2;
+    --ink-faint: #656e7d;
+    --line: rgba(233, 235, 238, 0.09);
+    --line-strong: rgba(233, 235, 238, 0.18);
+
+    --a18: #e0924f;       /* legacy / React 18 */
+    --a18-dim: #8a6440;
+    --a18-tint: rgba(224, 146, 79, 0.12);
+    --a19: #45d1b8;       /* target / React 19 */
+    --a19-dim: #35897a;
+    --a19-tint: rgba(69, 209, 184, 0.12);
+    --violet: #8f86e8;
+    --violet-tint: rgba(143, 134, 232, 0.12);
+
+    --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 32px -12px rgba(0,0,0,0.55);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f3f4f2;
+      --bg-elevated: #ffffff;
+      --bg-inset: #e8e9e6;
+      --ink: #1a1d24;
+      --ink-dim: #565f6e;
+      --ink-faint: #8891a0;
+      --line: rgba(26, 29, 36, 0.1);
+      --line-strong: rgba(26, 29, 36, 0.2);
+      --a18: #b56a2c;
+      --a18-dim: #d99656;
+      --a18-tint: rgba(181, 106, 44, 0.1);
+      --a19: #1f8f79;
+      --a19-dim: #4aad99;
+      --a19-tint: rgba(31, 143, 121, 0.1);
+      --violet: #6f63d6;
+      --violet-tint: rgba(111, 99, 214, 0.1);
+      --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 12px 28px -14px rgba(0,0,0,0.18);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12151b; --bg-elevated: #1a1e26; --bg-inset: #0d0f14;
+    --ink: #e9ebee; --ink-dim: #9aa3b2; --ink-faint: #656e7d;
+    --line: rgba(233, 235, 238, 0.09); --line-strong: rgba(233, 235, 238, 0.18);
+    --a18: #e0924f; --a18-dim: #8a6440; --a18-tint: rgba(224, 146, 79, 0.12);
+    --a19: #45d1b8; --a19-dim: #35897a; --a19-tint: rgba(69, 209, 184, 0.12);
+    --violet: #8f86e8; --violet-tint: rgba(143, 134, 232, 0.12);
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 32px -12px rgba(0,0,0,0.55);
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f4f2; --bg-elevated: #ffffff; --bg-inset: #e8e9e6;
+    --ink: #1a1d24; --ink-dim: #565f6e; --ink-faint: #8891a0;
+    --line: rgba(26, 29, 36, 0.1); --line-strong: rgba(26, 29, 36, 0.2);
+    --a18: #b56a2c; --a18-dim: #d99656; --a18-tint: rgba(181, 106, 44, 0.1);
+    --a19: #1f8f79; --a19-dim: #4aad99; --a19-tint: rgba(31, 143, 121, 0.1);
+    --violet: #6f63d6; --violet-tint: rgba(111, 99, 214, 0.1);
+    --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 12px 28px -14px rgba(0,0,0,0.18);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  body { overflow: hidden; }
+
+  .deck { height: 100vh; width: 100vw; display: flex; flex-direction: column; position: relative; }
+
+  .slides {
+    flex: 1; position: relative; min-height: 0;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: clamp(1rem, 3vw, 2.5rem);
+  }
+
+  .slide {
+    position: absolute; inset: clamp(1rem, 3vw, 2.5rem);
+    display: none; flex-direction: column;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1.75rem, 5vw, 4.5rem);
+    overflow-y: auto; overflow-x: hidden;
+  }
+  .slide.active { display: flex; animation: rise 420ms cubic-bezier(.2,.7,.3,1); }
+  @media (prefers-reduced-motion: reduce) { .slide.active { animation: none; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-faint); margin: 0 0 0.9rem 0;
+    display: flex; align-items: center; gap: 0.6em;
+  }
+  .eyebrow::before { content: ""; width: 1.6em; height: 1px; background: var(--line-strong); display: inline-block; }
+
+  h1.slide-title {
+    font-family: var(--font-mono); font-weight: 600;
+    font-size: clamp(1.6rem, 3.6vw, 2.6rem); line-height: 1.12;
+    margin: 0 0 0.5rem 0; text-wrap: balance; letter-spacing: -0.01em;
+  }
+  .slide-sub { font-size: clamp(0.98rem, 1.4vw, 1.15rem); color: var(--ink-dim); max-width: 62ch; margin: 0 0 1.75rem 0; line-height: 1.55; }
+  .slide-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1.25rem; }
+
+  /* ---------- title slide ---------- */
+  .title-wrap { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 1.6rem; }
+  .version-mark {
+    font-family: var(--font-mono); font-size: clamp(3rem, 10vw, 7rem); font-weight: 700;
+    letter-spacing: -0.02em; display: flex; align-items: baseline; gap: 0.3em;
+  }
+  .v18 { color: var(--a18); }
+  .v-arrow { color: var(--ink-faint); font-weight: 400; font-size: 0.6em; }
+  .v19 { color: var(--a19); }
+  .title-tagline { font-size: clamp(1.05rem, 2vw, 1.4rem); color: var(--ink-dim); max-width: 46ch; line-height: 1.5; }
+  .title-meta {
+    font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint);
+    padding-top: 1.4rem; border-top: 1px solid var(--line); width: 100%;
+    display: flex; gap: 1.6rem; flex-wrap: wrap;
+  }
+
+  /* ---------- principle grid (slide 2) ---------- */
+  .principle-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.1rem; }
+  .principle-card { border: 1px solid var(--line); border-radius: 10px; padding: 1.3rem; background: var(--bg-inset); display: flex; flex-direction: column; gap: 0.6rem; }
+  .principle-label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--violet); letter-spacing: 0.02em; }
+  .principle-text { font-size: 0.96rem; line-height: 1.55; color: var(--ink); }
+
+  /* ---------- architecture diagram (slide 3) ---------- */
+  .arch-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+  .arch-node {
+    font-family: var(--font-mono); font-size: 0.85rem;
+    border: 1px solid var(--line-strong); border-radius: 9px;
+    padding: 0.65rem 1.1rem; background: var(--bg-inset);
+    color: var(--ink); white-space: nowrap; box-shadow: var(--shadow);
+  }
+  .arch-node.emph { border-color: var(--a19); color: var(--a19); }
+  .arch-node.agent { border-color: var(--violet); color: var(--violet); }
+  .arch-connector { width: 1px; height: 1.6rem; background: var(--line-strong); }
+  .arch-row { display: flex; gap: 2.4rem; align-items: flex-start; justify-content: center; }
+  .arch-branch { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .arch-sub { font-size: 0.72rem; color: var(--ink-faint); font-family: var(--font-mono); text-align: center; max-width: 20ch; }
+  .arch-refs { display: flex; gap: 0.8rem; margin-top: 0.5rem; }
+
+  /* ---------- phase cards (slides 4 & 5) ---------- */
+  .phase-strip { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .phase-card { border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem; background: var(--bg-inset); display: flex; flex-direction: column; gap: 0.55rem; }
+  .phase-num-row { display: flex; align-items: center; gap: 0.6rem; }
+  .phase-num {
+    font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem;
+    width: 1.9rem; height: 1.9rem; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .stage1 .phase-num { background: var(--violet-tint); color: var(--violet); }
+  .stage2 .phase-num { background: var(--a19-tint); color: var(--a19); }
+  .phase-name { font-weight: 600; font-size: 0.94rem; }
+  .phase-desc { font-size: 0.85rem; color: var(--ink-dim); line-height: 1.5; }
+  .phase-badge { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 100px; width: fit-content; text-transform: uppercase; }
+  .badge-readonly { background: var(--violet-tint); color: var(--violet); }
+  .badge-mutates { background: var(--a18-tint); color: var(--a18); }
+
+  /* ---------- chrome: nav, progress, counter ---------- */
+  .chrome {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem clamp(1rem, 3vw, 2.5rem);
+    font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint);
+    flex-shrink: 0;
+  }
+  .chrome-left { display: flex; align-items: center; gap: 0.9rem; }
+  .brand { color: var(--ink); font-weight: 600; }
+  .brand .b18 { color: var(--a18); }
+  .brand .b19 { color: var(--a19); }
+  .dots { display: flex; gap: 0.4rem; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); border: none; padding: 0; cursor: pointer; }
+  .dot.active { background: var(--a19); width: 16px; border-radius: 3px; transition: all 180ms ease; }
+  .nav-btns { display: flex; gap: 0.5rem; align-items: center; }
+  .nav-btn {
+    font-family: var(--font-mono); font-size: 0.85rem;
+    background: var(--bg-inset); color: var(--ink); border: 1px solid var(--line-strong);
+    border-radius: 7px; padding: 0.4rem 0.75rem; cursor: pointer;
+  }
+  .nav-btn:hover { border-color: var(--a19); color: var(--a19); }
+  .nav-btn:focus-visible, .dot:focus-visible { outline: 2px solid var(--a19); outline-offset: 2px; }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .nav-btn:disabled:hover { border-color: var(--line-strong); color: var(--ink); }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 5px; }
+</style>
+
+<div class="deck">
+  <div class="slides" id="slides">
+
+    <!-- 1 -->
+    <section class="slide active">
+      <div class="title-wrap">
+        <div class="version-mark"><span class="v18">18</span><span class="v-arrow">→</span><span class="v19">19</span></div>
+        <div class="title-tagline">A migration system that can be paused and resumed by anyone, anywhere.</div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide">
+      <p class="eyebrow">Why it's built this way</p>
+      <h1 class="slide-title">Breaking changes first, not feature adoption</h1>
+      <p class="slide-sub">Three decisions shape every phase that follows.</p>
+      <div class="slide-body">
+        <div class="principle-grid">
+          <div class="principle-card">
+            <span class="principle-label">Verify live</span>
+            <span class="principle-text">Peer ranges, TypeScript floors, and vulnerability baselines shift faster than training data — every check hits the real registry or repo, never memory.</span>
+          </div>
+          <div class="principle-card">
+            <span class="principle-label">Fix what broke, not what's new</span>
+            <span class="principle-text">Actions, the compiler, Server Components are out of scope unless explicitly asked for. This is remediation, not a feature tour.</span>
+          </div>
+          <div class="principle-card">
+            <span class="principle-label">Assume interruption</span>
+            <span class="principle-text">Token limits, handoffs, a colleague on another machine — the workflow checkpoints after every phase so a stop is never a restart.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide">
+      <p class="eyebrow">Architecture</p>
+      <h1 class="slide-title">Six files, each with one job</h1>
+      <p class="slide-sub">One entry point, two stages, a shared state file, and a driver that can run the whole thing unattended.</p>
+      <div class="slide-body">
+        <div class="arch-wrap">
+          <div class="arch-node agent">react19-migration-agent.md</div>
+          <div class="arch-connector"></div>
+          <div class="arch-node emph">SKILL.md</div>
+          <div class="arch-connector"></div>
+          <div class="arch-row">
+            <div class="arch-branch">
+              <div class="arch-node">PLAN.md</div>
+              <div class="arch-sub">Stage 1 · Phases 0–3</div>
+            </div>
+            <div class="arch-branch">
+              <div class="arch-node">IMPLEMENT.md</div>
+              <div class="arch-sub">Stage 2 · Phases 4–10</div>
+            </div>
+          </div>
+          <div class="arch-connector"></div>
+          <div class="arch-refs">
+            <div class="arch-node" style="font-size:0.75rem;">references/breaking-changes.md</div>
+            <div class="arch-node" style="font-size:0.75rem;">references/migration-history.md</div>
+          </div>
+          <div class="arch-connector"></div>
+          <div class="arch-row">
+            <div class="arch-node" style="color:var(--a18); border-color:var(--a18);">migrationHistory.json</div>
+            <div class="arch-node" style="color:var(--ink-dim);">instructions.md</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide">
+      <p class="eyebrow">Stage 1 · read-only</p>
+      <h1 class="slide-title">Planning — assessment only</h1>
+      <p class="slide-sub">Nothing here touches source code. This is the entry point for every request, including ones that just ask "is it safe to upgrade."</p>
+      <div class="slide-body">
+        <div class="phase-strip">
+          <div class="phase-card stage1">
+            <div class="phase-num-row"><span class="phase-num">0</span><span class="phase-name">Baseline</span></div>
+            <span class="phase-desc">Clean tree, dedicated branch, a true React-18 test/build baseline, and migration scope decided.</span>
+            <span class="phase-badge badge-readonly">no mutation</span>
+          </div>
+          <div class="phase-card stage1">
+            <div class="phase-num-row"><span class="phase-num">1</span><span class="phase-name">Peer-dependency matrix</span></div>
+            <span class="phase-desc">Every dependency classified ✅ / 🟡 / 🔴 / ⚪ against the live React 19 peer range.</span>
+            <span class="phase-badge badge-readonly">no mutation</span>
+          </div>
+          <div class="phase-card stage1">
+            <div class="phase-num-row"><span class="phase-num">2</span><span class="phase-name">TypeScript compatibility</span></div>
+            <span class="phase-desc">Dist-tag check finds the real @types/react floor for the installed TypeScript.</span>
+            <span class="phase-badge badge-readonly">no mutation</span>
+          </div>
+          <div class="phase-card stage1">
+            <div class="phase-num-row"><span class="phase-num">3</span><span class="phase-name">Vulnerability &amp; stability</span></div>
+            <span class="phase-desc">npm audit baseline; prefer the smallest stable version over blindly installing latest.</span>
+            <span class="phase-badge badge-readonly">no mutation</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide">
+      <p class="eyebrow">Stage 2 · mutates code</p>
+      <h1 class="slide-title">Implementation — fix, verify, ship</h1>
+      <p class="slide-sub">Only reached once Stage 1 is fully green. Every fix here is applied by hand — no automated rewrite tool is used or depended on.</p>
+      <div class="slide-body">
+        <div class="phase-strip">
+          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">4</span><span class="phase-name">Grep sweep + manual fixes</span></div><span class="phase-desc">Find every removed API by pattern, fix each by hand against breaking-changes.md.</span><span class="phase-badge badge-mutates">mutates</span></div>
+          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">5</span><span class="phase-name">TypeScript-specific fixes</span></div><span class="phase-desc">useRef, ref-callback returns, the JSX namespace, useReducer generics — by hand, verified via tsc.</span><span class="phase-badge badge-mutates">mutates</span></div>
+          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">6</span><span class="phase-name">Upgrade + bump React</span></div><span class="phase-desc">Flagged dependencies first, then react/react-dom at the exact chosen version.</span><span class="phase-badge badge-mutates">mutates</span></div>
+          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">7</span><span class="phase-name">Per-component loop</span></div><span class="phase-desc">A component is touched only because its own test told you to — never a blanket pass.</span><span class="phase-badge badge-mutates">mutates</span></div>
+          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">8</span><span class="phase-name">Business-logic freeze</span></div><span class="phase-desc">Walk the full diff; every hunk must be mechanical, or it gets flagged, not folded in.</span><span class="phase-badge badge-mutates">reviews diff</span></div>
+          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">9</span><span class="phase-name">Full verification</span></div><span class="phase-desc">Whole test suite, production build, manual QA, and an audit re-check against baseline.</span><span class="phase-badge badge-mutates">verifies</span></div>
+          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">10</span><span class="phase-name">Deliverable</span></div><span class="phase-desc">instructions.md kept generic and current; migrationHistory.json finalized.</span><span class="phase-badge badge-mutates">finalizes</span></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="chrome">
+    <div class="chrome-left">
+      <span class="brand"><span class="b18">18</span>→<span class="b19">19</span> migration</span>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="nav-btns">
+      <button class="nav-btn" id="prevBtn" aria-label="Previous slide">← Prev</button>
+      <span id="counter" style="min-width:3.5em; text-align:center;">01 / 05</span>
+      <button class="nav-btn" id="nextBtn" aria-label="Next slide">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var slides = document.querySelectorAll('.slide');
+    var total = slides.length;
+    var current = 0;
+
+    var dotsEl = document.getElementById('dots');
+    for (var i = 0; i < total; i++) {
+      var d = document.createElement('button');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      d.addEventListener('click', (function (idx) { return function () { go(idx); }; })(i));
+      dotsEl.appendChild(d);
+    }
+    var dots = dotsEl.querySelectorAll('.dot');
+
+    var counter = document.getElementById('counter');
+    var prevBtn = document.getElementById('prevBtn');
+    var nextBtn = document.getElementById('nextBtn');
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function render() {
+      slides.forEach(function (s, idx) { s.classList.toggle('active', idx === current); });
+      dots.forEach(function (d, idx) { d.classList.toggle('active', idx === current); });
+      counter.textContent = pad(current + 1) + ' / ' + pad(total);
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === total - 1;
+    }
+
+    function go(idx) {
+      current = Math.max(0, Math.min(total - 1, idx));
+      render();
+    }
+
+    prevBtn.addEventListener('click', function () { go(current - 1); });
+    nextBtn.addEventListener('click', function () { go(current + 1); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') { go(current + 1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { go(current - 1); }
+    });
+
+    render();
+  })();
+</script>
