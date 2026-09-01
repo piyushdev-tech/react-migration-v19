@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cypress vs Playwright - Comprehensive Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #007acc;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #007acc;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #666;
+            font-style: italic;
+        }
+
+        .date {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #fff;
+            background-color: #007acc;
+            padding: 15px 20px;
+            margin: 30px 0 20px 0;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background-color: #0078d4;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #005a9e;
+        }
+
+        td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            line-height: 1.6;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .aspect {
+            font-weight: 600;
+            color: #007acc;
+            width: 150px;
+            background-color: #f0f7ff;
+        }
+
+        .pros {
+            color: #107c10;
+            font-weight: 500;
+        }
+
+        .cons {
+            color: #d83b01;
+            font-weight: 500;
+        }
+
+        .neutral {
+            color: #773800;
+            font-weight: 500;
+        }
+
+        ul {
+            margin-left: 20px;
+            list-style-type: disc;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .highlight-new {
+            background-color: #fff4ce;
+            padding: 15px;
+            border-left: 4px solid #ffb900;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .highlight-existing {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #0078d4;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .recommendation {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-left: 4px solid #4caf50;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .warning {
+            background-color: #fff3e0;
+            padding: 15px;
+            border-left: 4px solid #ff9800;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .score-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .score-table td {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .score {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .score-high {
+            color: #107c10;
+        }
+
+        .score-medium {
+            color: #ffb900;
+        }
+
+        .score-low {
+            color: #d83b01;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+            table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎭 Cypress vs Playwright</h1>
+            <p class="subtitle">Comprehensive Comparison for E2E Testing</p>
+            <p class="date">Generated: August 31, 2026</p>
+        </header>
+
+        <!-- OVERVIEW SECTION -->
+        <div class="section-title">📊 Overview Comparison</div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%">Aspect</th>
+                    <th style="width: 40%">Cypress</th>
+                    <th style="width: 40%">Playwright</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Initial Release</td>
+                    <td>2015</td>
+                    <td>2019</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Developer</td>
+                    <td>Cypress.io</td>
+                    <td>Microsoft</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Language</td>
+                    <td>JavaScript/TypeScript</td>
+                    <td>JavaScript/TypeScript/Python/Java/.NET/Go</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Architecture</td>
+                    <td>Runs inside browser</td>
+                    <td>Communicates via DevTools Protocol</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Browsers Supported</td>
+                    <td>Chromium, Firefox, Edge (not Safari)</td>
+                    <td>Chromium, Firefox, WebKit (all major browsers)</td>
+                </tr>
+                <tr>
+                    <td class="aspect">License</td>
+                    <td>MIT (Open Source)</td>
+                    <td>Apache 2.0 (Open Source)</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Community Size</td>
+                    <td>Larger, more mature</td>
+                    <td>Growing rapidly</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- NEW PROJECT SECTION -->
+        <div class="section-title">🚀 For NEW Projects</div>
+
+        <div class="highlight-new">
+            <strong>New Project Scenario:</strong> Starting a fresh E2E testing suite with 0 existing tests
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%">Criteria</th>
+                    <th style="width: 40%">Cypress</th>
+                    <th style="width: 40%">Playwright</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Setup Time</td>
+                    <td>
+                        <span class="pros">✓ Quick (5-10 mins)</span>
+                        <ul>
+                            <li>Straightforward npm install</li>
+                            <li>Interactive setup wizard</li>
+                            <li>Good starter templates</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Quick (5-10 mins)</span>
+                        <ul>
+                            <li>npm install @playwright/test</li>
+                            <li>Config generation</li>
+                            <li>Clear documentation</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Learning Curve</td>
+                    <td>
+                        <span class="pros">✓ Very Gentle</span>
+                        <ul>
+                            <li>Familiar browser APIs</li>
+                            <li>Excellent documentation</li>
+                            <li>Large community resources</li>
+                            <li>Interactive debugging built-in</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="neutral">~ Moderate</span>
+                        <ul>
+                            <li>Modern async/await patterns</li>
+                            <li>More features to learn initially</li>
+                            <li>Growing community resources</li>
+                            <li>More powerful but steeper curve</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Writing First Tests</td>
+                    <td>
+                        <span class="pros">✓ Easier</span>
+                        <ul>
+                            <li>Lower barrier to entry</li>
+                            <li>Intuitively structured tests</li>
+                            <li>Quick wins with simple assertions</li>
+                            <li>Interactive test runner</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Efficient</span>
+                        <ul>
+                            <li>More flexible approach</li>
+                            <li>Powerful APIs from day 1</li>
+                            <li>Better for complex scenarios</li>
+                            <li>Modern testing patterns</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Browser Coverage</td>
+                    <td>
+                        <span class="cons">✗ Limited to 3 Browsers</span>
+                        <ul>
+                            <li>No Safari support (major limitation)</li>
+                            <li>No mobile testing</li>
+                            <li>Limited device emulation</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Comprehensive</span>
+                        <ul>
+                            <li>All major browsers including Safari</li>
+                            <li>Mobile device emulation</li>
+                            <li>Multi-browser out of box</li>
+                            <li>Better cross-browser coverage</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Speed</td>
+                    <td>
+                        <span class="cons">~ Slower</span>
+                        <ul>
+                            <li>Runs inside browser context</li>
+                            <li>More overhead per action</li>
+                            <li>Slower test execution</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Faster</span>
+                        <ul>
+                            <li>Out-of-process execution</li>
+                            <li>Efficient DevTools Protocol</li>
+                            <li>Faster test runs</li>
+                            <li>Better for large test suites</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Debugging</td>
+                    <td>
+                        <span class="pros">✓ Excellent</span>
+                        <ul>
+                            <li>Interactive test runner GUI</li>
+                            <li>Time-travel debugging</li>
+                            <li>Network panel built-in</li>
+                            <li>Screenshots/videos automatic</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Very Good</span>
+                        <ul>
+                            <li>UI mode for debugging</li>
+                            <li>Inspector for element selection</li>
+                            <li>Trace viewer</li>
+                            <li>Powerful but requires setup</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Cost</td>
+                    <td>
+                        <span class="neutral">~ Freemium Model</span>
+                        <ul>
+                            <li>Free open source</li>
+                            <li>Cypress Cloud for CI/CD (paid)</li>
+                            <li>Reasonable pricing for teams</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Fully Free</span>
+                        <ul>
+                            <li>100% open source</li>
+                            <li>No paid tier required</li>
+                            <li>No vendor lock-in</li>
+                            <li>Self-hosted CI/CD friendly</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Recommendation for New Project</td>
+                    <td colspan="2" style="text-align: center; background-color: #e8f5e9;">
+                        <strong>🏆 Tie (depends on priorities)</strong><br>
+                        Choose <strong>Cypress</strong> if: Team prioritizes ease of learning, interactive debugging, and quick onboarding<br>
+                        Choose <strong>Playwright</strong> if: Need Safari support, mobile testing, multi-language support, or large-scale testing
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- EXISTING LARGE CODEBASE SECTION -->
+        <div class="section-title">🏗️ For EXISTING Projects (200-300 Files)</div>
+
+        <div class="highlight-existing">
+            <strong>Large Codebase Scenario:</strong> Adding E2E tests to an existing React project with 200-300 files, possibly with existing unit tests and integration tests
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%">Criteria</th>
+                    <th style="width: 40%">Cypress</th>
+                    <th style="width: 40%">Playwright</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Integration Effort</td>
+                    <td>
+                        <span class="cons">~ Moderate</span>
+                        <ul>
+                            <li>May conflict with existing test setup</li>
+                            <li>Port configuration needed</li>
+                            <li>Separate from unit tests</li>
+                            <li>Works but adds complexity</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Seamless</span>
+                        <ul>
+                            <li>Runs alongside existing tests</li>
+                            <li>No browser conflicts</li>
+                            <li>Can share test utilities</li>
+                            <li>Better isolation</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Existing Test Reuse</td>
+                    <td>
+                        <span class="cons">✗ Limited</span>
+                        <ul>
+                            <li>Can't reuse unit test infrastructure</li>
+                            <li>Different testing paradigm</li>
+                            <li>Separate page object models needed</li>
+                            <li>Duplication possible</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Better</span>
+                        <ul>
+                            <li>Can reuse test utilities</li>
+                            <li>Similar patterns to Vitest/Jest</li>
+                            <li>Shared fixtures and helpers</li>
+                            <li>Less code duplication</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Dev Server Integration</td>
+                    <td>
+                        <span class="neutral">~ Manual Setup</span>
+                        <ul>
+                            <li>Requires cypress.config.js tweaks</li>
+                            <li>Dev server must be running</li>
+                            <li>Conditional logic for environments</li>
+                            <li>Vite/Webpack compatibility good</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Automatic</span>
+                        <ul>
+                            <li>webServer config auto-starts dev</li>
+                            <li>Smart wait for readiness</li>
+                            <li>Works with any build tool</li>
+                            <li>CI/CD friendly</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">CI/CD Pipeline Compatibility</td>
+                    <td>
+                        <span class="neutral">~ Good with Caveats</span>
+                        <ul>
+                            <li>Cypress Cloud offers CI integration</li>
+                            <li>GitHub Actions support</li>
+                            <li>Heavier resource usage</li>
+                            <li>Longer test runs in CI</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Excellent</span>
+                        <ul>
+                            <li>Lighter resource footprint</li>
+                            <li>Faster CI/CD runs</li>
+                            <li>Better parallelization</li>
+                            <li>Lower infrastructure costs</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Scalability to 200-300 Files</td>
+                    <td>
+                        <span class="cons">✗ Challenges</span>
+                        <ul>
+                            <li>Test execution slower</li>
+                            <li>Browser memory issues at scale</li>
+                            <li>Parallel test limitations</li>
+                            <li>Maintenance overhead increases</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Excellent</span>
+                        <ul>
+                            <li>Built for large test suites</li>
+                            <li>Efficient parallelization</li>
+                            <li>Lower memory footprint</li>
+                            <li>Scales well</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Test Organization</td>
+                    <td>
+                        <span class="neutral">~ Adequate</span>
+                        <ul>
+                            <li>Folder structure: e2e/specs</li>
+                            <li>Support folder for utilities</li>
+                            <li>Page Object Model support</li>
+                            <li>Can mirror project structure</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Superior</span>
+                        <ul>
+                            <li>Flexible folder structure</li>
+                            <li>Tag-based organization</li>
+                            <li>Built-in fixtures for setup</li>
+                            <li>Better test isolation</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Maintenance Burden</td>
+                    <td>
+                        <span class="cons">~ Moderate-High</span>
+                        <ul>
+                            <li>Flaky test issues at scale</li>
+                            <li>Timeout management needed</li>
+                            <li>More debugging required</li>
+                            <li>Community support sometimes inconsistent</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Low-Moderate</span>
+                        <ul>
+                            <li>Stable and reliable</li>
+                            <li>Better error messages</li>
+                            <li>Fewer flaky tests</li>
+                            <li>Active development</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Performance Impact on Dev Cycle</td>
+                    <td>
+                        <span class="cons">~ Noticeable Slowdown</span>
+                        <ul>
+                            <li>Tests take longer to run locally</li>
+                            <li>Watch mode can be resource intensive</li>
+                            <li>Dev server + Cypress overhead</li>
+                            <li>Developer productivity may suffer</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Minimal Impact</span>
+                        <ul>
+                            <li>Faster local test runs</li>
+                            <li>Less resource overhead</li>
+                            <li>Better dev experience</li>
+                            <li>Faster CI/CD feedback</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Multi-browser Testing at Scale</td>
+                    <td>
+                        <span class="cons">✗ Not Ideal</span>
+                        <ul>
+                            <li>Limited browser matrix</li>
+                            <li>Safari completely missing</li>
+                            <li>CI costs multiply with browsers</li>
+                            <li>Test time increases significantly</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="pros">✓ Efficient</span>
+                        <ul>
+                            <li>All browsers supported</li>
+                            <li>Parallel execution optimized</li>
+                            <li>Lower CI costs</li>
+                            <li>Comprehensive coverage achievable</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Recommendation for Existing Large Project</td>
+                    <td colspan="2" style="text-align: center; background-color: #e8f5e9;">
+                        <strong>🏆 PLAYWRIGHT WINS</strong><br>
+                        Better integration with existing projects, superior scalability, faster CI/CD, better maintenance experience, and lower resource overhead for 200-300 test files
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- FEATURE COMPARISON -->
+        <div class="section-title">✨ Detailed Feature Comparison</div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 25%">Feature</th>
+                    <th style="width: 37.5%">Cypress</th>
+                    <th style="width: 37.5%">Playwright</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Multiple Languages</td>
+                    <td class="cons">✗ JavaScript/TypeScript only</td>
+                    <td class="pros">✓ JS/TS/Python/Java/.NET/Go</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Safari Support</td>
+                    <td class="cons">✗ Not supported</td>
+                    <td class="pros">✓ Full support via WebKit</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Mobile Device Emulation</td>
+                    <td class="cons">✗ Limited</td>
+                    <td class="pros">✓ Comprehensive (20+ devices)</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Geolocation Testing</td>
+                    <td class="cons">✗ No built-in support</td>
+                    <td class="pros">✓ Built-in</td>
+                </tr>
+                <tr>
+                    <td class="aspect">HAR (Network) Recording</td>
+                    <td class="cons">✗ No</td>
+                    <td class="pros">✓ Yes</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Trace Viewer</td>
+                    <td class="neutral">~ Screenshots/videos</td>
+                    <td class="pros">✓ Interactive trace viewer</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Test Parallelization</td>
+                    <td class="cons">~ Works but limited</td>
+                    <td class="pros">✓ Excellent parallelization</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Visual Comparison</td>
+                    <td class="neutral">~ Via plugins</td>
+                    <td class="neutral">~ Via plugins</td>
+                </tr>
+                <tr>
+                    <td class="aspect">API Testing</td>
+                    <td class="neutral">~ Can do via cy.request()</td>
+                    <td class="pros">✓ Built-in API client</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Custom Commands</td>
+                    <td class="pros">✓ Easy custom commands</td>
+                    <td class="neutral">~ Via fixtures</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Page Object Model</td>
+                    <td class="pros">✓ Well-established pattern</td>
+                    <td class="pros">✓ Great support via fixtures</td>
+                </tr>
+                <tr>
+                    <td class="aspect">BDD/Gherkin Support</td>
+                    <td class="neutral">~ Via plugins</td>
+                    <td class="neutral">~ Via Cucumber integration</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Docker Support</td>
+                    <td class="neutral">~ Possible with setup</td>
+                    <td class="pros">✓ Official Docker images</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Accessibility Testing</td>
+                    <td class="neutral">~ Via libraries</td>
+                    <td class="neutral">~ Via libraries</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Service Worker Testing</td>
+                    <td class="cons">✗ Limitations</td>
+                    <td class="pros">✓ Better support</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- DECISION SCORING -->
+        <div class="section-title">📈 Decision Scoring Matrix</div>
+
+        <p style="margin-bottom: 20px;"><strong>Scoring Scale:</strong> 1-3 (1=Poor, 2=Good, 3=Excellent)</p>
+
+        <h3 style="color: #007acc; margin: 20px 0 15px 0;">📍 For New Project Scenario:</h3>
+        <table class="score-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left; width: 30%">Criteria</th>
+                    <th style="width: 35%">Cypress</th>
+                    <th style="width: 35%">Playwright</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Ease of Setup</td>
+                    <td><span class="score score-high">3/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Learning Curve</td>
+                    <td><span class="score score-high">3/3</span></td>
+                    <td><span class="score score-medium">2/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Debugging Experience</td>
+                    <td><span class="score score-high">3/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Documentation Quality</td>
+                    <td><span class="score score-high">3/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Browser Coverage</td>
+                    <td><span class="score score-low">1/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Performance</td>
+                    <td><span class="score score-medium">2/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr style="font-weight: bold;">
+                    <td class="aspect" style="font-weight: bold;">TOTAL</td>
+                    <td><span class="score" style="color: #ffb900;">15/18</span></td>
+                    <td><span class="score" style="color: #107c10;">16/18</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 style="color: #007acc; margin: 20px 0 15px 0;">📍 For Existing Large Project (200-300 Files):</h3>
+        <table class="score-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left; width: 30%">Criteria</th>
+                    <th style="width: 35%">Cypress</th>
+                    <th style="width: 35%">Playwright</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Integration Ease</td>
+                    <td><span class="score score-medium">2/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Scalability</td>
+                    <td><span class="score score-low">1/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Maintenance</td>
+                    <td><span class="score score-medium">2/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">CI/CD Performance</td>
+                    <td><span class="score score-medium">2/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Multi-browser Coverage</td>
+                    <td><span class="score score-low">1/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr>
+                    <td class="aspect">Developer Experience</td>
+                    <td><span class="score score-medium">2/3</span></td>
+                    <td><span class="score score-high">3/3</span></td>
+                </tr>
+                <tr style="font-weight: bold;">
+                    <td class="aspect" style="font-weight: bold;">TOTAL</td>
+                    <td><span class="score" style="color: #d83b01;">10/18</span></td>
+                    <td><span class="score" style="color: #107c10;">18/18</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- PROS AND CONS SUMMARY -->
+        <div class="section-title">⚖️ Pros and Cons Summary</div>
+
+        <h3 style="color: #0078d4; margin: 20px 0 15px 0;">Cypress</h3>
+        
+        <h4 style="color: #107c10; margin-top: 15px;">✅ Pros:</h4>
+        <ul>
+            <li>Excellent developer experience with interactive test runner</li>
+            <li>Gentle learning curve - easiest for beginners</li>
+            <li>Fantastic time-travel debugging capabilities</li>
+            <li>Built-in screenshots and video recording</li>
+            <li>Good community and abundant resources online</li>
+            <li>Established best practices and patterns</li>
+            <li>Custom commands are intuitive to write</li>
+            <li>Good for rapid prototyping and learning</li>
+        </ul>
+
+        <h4 style="color: #d83b01; margin-top: 15px;">❌ Cons:</h4>
+        <ul>
+            <li><strong>No Safari support</strong> - major limitation for iOS testing</li>
+            <li>Slower test execution compared to Playwright</li>
+            <li>Limited parallelization capabilities</li>
+            <li>Runs inside browser - can cause interference</li>
+            <li>Resource intensive - higher memory usage</li>
+            <li>Difficult to scale to large test suites (200+ tests)</li>
+            <li>Flaky tests more common at scale</li>
+            <li>Cloud services require paid subscription</li>
+            <li>Limited to JavaScript/TypeScript</li>
+            <li>Cross-domain testing limitations</li>
+        </ul>
+
+        <h3 style="color: #0078d4; margin: 20px 0 15px 0; margin-top: 30px;">Playwright</h3>
+        
+        <h4 style="color: #107c10; margin-top: 15px;">✅ Pros:</h4>
+        <ul>
+            <li><strong>All major browsers supported</strong> including Safari and WebKit</li>
+            <li>Significantly faster test execution</li>
+            <li>Excellent parallelization - scales to 1000+ tests easily</li>
+            <li>Out-of-process execution - cleaner separation</li>
+            <li>Lower resource footprint - efficient memory usage</li>
+            <li>Multiple language support (Python, Java, .NET, Go)</li>
+            <li>Superior API testing capabilities</li>
+            <li>Built-in trace viewer for debugging</li>
+            <li>Mobile device emulation (20+ devices)</li>
+            <li>Network HAR recording</li>
+            <li>Geolocation testing support</li>
+            <li>Excellent CI/CD integration</li>
+            <li>Actively maintained by Microsoft</li>
+            <li>100% free - no paid Cloud requirement</li>
+            <li>Better error messages and stack traces</li>
+        </ul>
+
+        <h4 style="color: #d83b01; margin-top: 15px;">❌ Cons:</h4>
+        <ul>
+            <li>Steeper initial learning curve than Cypress</li>
+            <li>Less interactive debugging (though improving)</li>
+            <li>Smaller community compared to Cypress (still growing fast)</li>
+            <li>Fewer third-party integrations initially</li>
+            <li>Custom fixtures require different pattern than Cypress commands</li>
+            <li>Requires more setup for some complex scenarios</li>
+        </ul>
+
+        <!-- FINAL RECOMMENDATIONS -->
+        <div class="section-title">🎯 Final Recommendations</div>
+
+        <div class="recommendation">
+            <h4>✅ Choose CYPRESS if:</h4>
+            <ul>
+                <li>You're building a <strong>new, small project</strong> (1-50 tests)</li>
+                <li>Your team is <strong>new to E2E testing</strong></li>
+                <li>You value <strong>interactive debugging experience</strong> above all</li>
+                <li>You only need to test <strong>Chrome/Firefox</strong> browsers</li>
+                <li>You prefer visual test runner over command-line</li>
+                <li>Team size is small and learning resources are important</li>
+            </ul>
+        </div>
+
+        <div class="recommendation" style="background-color: #c8e6c9;">
+            <h4>✅ Choose PLAYWRIGHT if:</h4>
+            <ul>
+                <li>You need to test <strong>large test suites</strong> (100+ tests)</li>
+                <li>You need <strong>Safari/iOS testing</strong> support</li>
+                <li>You're working with an <strong>existing large codebase</strong></li>
+                <li>Performance and speed are critical (CI/CD efficiency)</li>
+                <li>You need <strong>multi-browser coverage</strong> as standard</li>
+                <li>Your team uses multiple programming languages</li>
+                <li>You need mobile device emulation</li>
+                <li>You're building a serious, production-grade test suite</li>
+                <li>You want no vendor lock-in (100% free, open-source)</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <h4>⚠️ Important Considerations:</h4>
+            <ul>
+                <li><strong>Safari Testing:</strong> If you need to test Safari/iOS, Playwright is your only choice (Cypress doesn't support it)</li>
+                <li><strong>Scale:</strong> For 200+ tests, Playwright's performance advantage becomes critical</li>
+                <li><strong>CI/CD Costs:</strong> Playwright's efficiency can save significant infrastructure costs</li>
+                <li><strong>Team Ramp-up:</strong> If team is completely new to testing, Cypress has a gentler curve</li>
+                <li><strong>No Switching Back:</strong> Once invested in Cypress, switching to Playwright requires rewriting all tests</li>
+            </ul>
+        </div>
+
+        <!-- CONTEXT-SPECIFIC SCENARIOS -->
+        <div class="section-title">🔍 Context-Specific Decision Scenarios</div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30%">Scenario</th>
+                    <th style="width: 35%">Recommendation</th>
+                    <th style="width: 35%">Reasoning</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Brand new startup, MVP</td>
+                    <td style="color: #d83b01;"><strong>Either (slight edge: Cypress)</strong></td>
+                    <td>Cypress easier onboarding, but if MVP needs cross-browser: Playwright</td>
+                </tr>
+                <tr>
+                    <td class="aspect">React SPA with 250 components</td>
+                    <td style="color: #107c10;"><strong>Playwright</strong></td>
+                    <td>Large codebase needs scalability, performance, and Safari support</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Mobile-first app (iOS required)</td>
+                    <td style="color: #107c10;"><strong>Playwright</strong></td>
+                    <td>Only option with Safari/WebKit support</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Legacy project, no E2E tests</td>
+                    <td style="color: #107c10;"><strong>Playwright</strong></td>
+                    <td>Better integration, scalability, and maintenance for growing suite</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Small team, learning E2E testing</td>
+                    <td style="color: #d83b01;"><strong>Cypress</strong></td>
+                    <td>Easier learning curve helps team get productive faster</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Enterprise project, critical testing</td>
+                    <td style="color: #107c10;"><strong>Playwright</strong></td>
+                    <td>Better reliability, performance, and multi-language support</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Quick smoke tests only</td>
+                    <td style="color: #d83b01;"><strong>Either</strong></td>
+                    <td>Both adequate for small test count, Cypress slightly faster to setup</td>
+                </tr>
+                <tr>
+                    <td class="aspect">Complex cross-browser matrix</td>
+                    <td style="color: #107c10;"><strong>Playwright</strong></td>
+                    <td>Built for this scenario, much better performance and cost efficiency</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- MIGRATION PATH -->
+        <div class="section-title">🔄 Migration Considerations</div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%">Aspect</th>
+                    <th style="width: 50%">Switching Costs</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="aspect">Rewriting Tests</td>
+                    <td>
+                        <span class="cons">✗ VERY HIGH</span>
+                        <ul>
+                            <li>Each test must be rewritten</li>
+                            <li>Syntax is different (cy. vs await page.)</li>
+                            <li>Logic restructuring needed</li>
+                            <li>Time investment: ~50-70% of original writing time per test</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Utility Functions</td>
+                    <td>
+                        <span class="neutral">~ Medium</span>
+                        <ul>
+                            <li>Custom commands → fixtures/helpers</li>
+                            <li>Some reusable, but patterns differ</li>
+                            <li>Page objects can be adapted</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Test Data</td>
+                    <td>
+                        <span class="pros">✓ Easy</span>
+                        <ul>
+                            <li>Test data usually format-agnostic</li>
+                            <li>Fixtures can be reused</li>
+                            <li>Minor adjustments only</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">CI/CD Configuration</td>
+                    <td>
+                        <span class="neutral">~ Medium</span>
+                        <ul>
+                            <li>Different configuration format</li>
+                            <li>Different reporting structure</li>
+                            <li>Usually manageable in 1-2 days</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="aspect">Team Retraining</td>
+                    <td>
+                        <span class="neutral">~ Medium</span>
+                        <ul>
+                            <li>New patterns and APIs to learn</li>
+                            <li>Productivity dips initially</li>
+                            <li>Usually back to normal in 1-2 weeks</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr style="font-weight: bold; background-color: #fff3e0;">
+                    <td class="aspect" style="font-weight: bold;">RECOMMENDATION</td>
+                    <td style="font-weight: bold;">Choose wisely from the start - migration is expensive. Don't switch unless absolutely necessary (e.g., Safari support becomes business requirement)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <p><strong>Generated:</strong> August 31, 2026</p>
+            <p><strong>Note:</strong> This comparison is based on current versions as of 2026. Technologies evolve - always check official documentation for the latest features and updates.</p>
+            <p><strong>Versions Used:</strong> Cypress 13.x, Playwright 1.62.1</p>
+        </div>
+    </div>
+</body>
+</html>
