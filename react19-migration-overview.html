@@ -150,6 +150,64 @@
   .arch-sub { font-size: 0.72rem; color: var(--ink-faint); font-family: var(--font-mono); text-align: center; max-width: 20ch; }
   .arch-refs { display: flex; gap: 0.8rem; margin-top: 0.5rem; }
 
+  .standards-bar {
+    display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start;
+    border: 1px solid var(--a19); border-radius: 7px; padding: 0.48rem 0.75rem;
+    color: var(--a19); background: var(--a19-tint); font-family: var(--font-mono);
+    font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase;
+    box-shadow: 0 0 0 4px rgba(69, 209, 184, 0.04);
+  }
+  .standards-bar::before { content: "◆"; font-size: 0.6rem; }
+  .migration-tree { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; flex: 1; }
+  .tree-node {
+    position: relative; border: 1px solid var(--line-strong); border-radius: 10px;
+    padding: 0.95rem 1.15rem; background: var(--bg-inset); box-shadow: 0 8px 20px -16px rgba(0,0,0,0.8);
+  }
+  .tree-node.root { border: 2px solid var(--violet); background: linear-gradient(135deg, var(--bg-inset), var(--violet-tint)); text-align: center; min-width: min(100%, 26rem); }
+  .tree-node.plan { border-top: 3px solid var(--violet); }
+  .tree-node.implement { border-top: 3px solid var(--a19); }
+  .tree-node.support { border-top: 3px solid var(--a18); }
+  .tree-title { display: block; font: 600 1rem var(--font-mono); color: var(--ink); margin-bottom: 0.3rem; }
+  .tree-root-title { color: var(--violet); font-size: 1.1rem; }
+  .tree-text { display: block; color: var(--ink-dim); font-size: 0.86rem; line-height: 1.45; }
+  .tree-connector { width: 2px; height: 1.05rem; background: var(--a19); position: relative; border-radius: 2px; z-index: 1; }
+  .tree-connector::after {
+    content: none;
+  }
+  .tree-connector:has(+ .tree-branch)::after { display: none; }
+  .tree-branch { width: min(100%, 58rem); position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding-top: 1rem; }
+  .tree-branch::before { content: ""; position: absolute; top: 0; left: 25%; right: 25%; border-top: 2px solid var(--a19); }
+  .tree-branch > .tree-node::before { content: ""; position: absolute; top: -1rem; left: 50%; height: 1rem; border-left: 2px solid var(--a19); }
+  .tree-branch > .tree-node::after {
+    content: none;
+  }
+  .tree-support { width: min(100%, 58rem); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .tree-support .tree-node { background: linear-gradient(135deg, var(--bg-inset), rgba(224, 146, 79, 0.05)); }
+  .phase-columns { display: grid; grid-template-columns: 1fr; gap: 2.25rem; min-height: 0; }
+  .phase-group { min-width: 0; }
+  .phase-group-title { margin: 0 0 0.55rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--violet); text-transform: uppercase; letter-spacing: 0.08em; }
+  .phase-group.implementation .phase-group-title { color: var(--a18); }
+  .phase-group .phase-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.9rem; }
+  .phase-group.implementation .phase-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.9rem; }
+  .phase-group .phase-card { position: relative; min-height: 8.8rem; padding: 1rem 1.05rem; border-radius: 11px; box-shadow: 0 8px 20px -16px rgba(0,0,0,0.8); }
+  .phase-group .phase-card:not(:last-child)::after { content: "↓"; position: absolute; left: 50%; bottom: -1.35rem; transform: translateX(-50%); color: var(--a19); font: 700 1.2rem var(--font-mono); z-index: 2; }
+  .phase-group .phase-card:not(:last-child)::after { content: "→"; left: auto; right: -0.75rem; top: 50%; bottom: auto; transform: translateY(-50%); }
+  .phase-group.implementation .phase-card::after { content: ""; }
+  .phase-group.implementation .phase-card:nth-child(odd):not(:last-child)::after { content: "→"; left: auto; right: -0.75rem; top: 50%; bottom: auto; transform: translateY(-50%); }
+  .phase-group.implementation .phase-card:nth-child(even):not(:last-child)::after { content: ""; }
+  .phase-group .phase-desc { font-size: 0.93rem; line-height: 1.5; }
+  .phase-group .phase-name { font-size: 1rem; }
+  .phase-group .phase-num { width: 2.15rem; height: 2.15rem; font-size: 0.94rem; border-radius: 8px; }
+  .phase-group-title { font-size: 0.86rem; margin-bottom: 0.75rem; }
+  @media (max-width: 760px) {
+    .tree-branch, .tree-support, .phase-columns, .phase-group .phase-strip, .phase-group.implementation .phase-strip { grid-template-columns: 1fr; }
+    .tree-branch { padding-top: 0; }
+    .tree-branch::before, .tree-branch > .tree-node::before, .tree-branch > .tree-node::after { display: none; }
+    .phase-group .phase-card:not(:last-child)::after { content: "↓"; left: 50%; right: auto; top: auto; bottom: -1.35rem; transform: translateX(-50%); }
+    .slide { padding: 1.35rem; }
+  }
+  .phase-group .phase-card::after { content: none !important; }
+
   /* ---------- phase cards (slides 4 & 5) ---------- */
   .phase-strip { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
   .phase-card { border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem; background: var(--bg-inset); display: flex; flex-direction: column; gap: 0.55rem; }
@@ -202,115 +260,57 @@
 
     <!-- 1 -->
     <section class="slide active">
-      <div class="title-wrap">
-        <div class="version-mark"><span class="v18">18</span><span class="v-arrow">→</span><span class="v19">19</span></div>
-        <div class="title-tagline">A migration system that can be paused and resumed by anyone, anywhere.</div>
+      <p class="eyebrow">React 18 → 19.2.8 · Bethos migration standards</p>
+      <h1 class="slide-title">How the migration system fits together</h1>
+      <p class="slide-sub">The agent is the entry point. It loads the skill, follows the plan, crosses a quality gate, and then uses the implementation guide to move the code safely to React 19.2.8.</p>
+      <div class="slide-body">
+        <span class="standards-bar">Bethos standard: breaking changes first, evidence before edits</span>
+        <div class="migration-tree" aria-label="Migration workflow tree">
+          <div class="tree-node root"><span class="tree-title tree-root-title">react19-migration-agent.md</span><span class="tree-text">The operator: starts the workflow, checks the checkpoint, and resumes at the correct phase.</span></div>
+          <div class="tree-connector"></div>
+          <div class="tree-node"><span class="tree-title">SKILL.md</span><span class="tree-text">The rules: scope, order, live checks, and Bethos guardrails.</span></div>
+          <div class="tree-connector"></div>
+          <div class="tree-branch">
+            <div class="tree-node plan"><span class="tree-title">PLAN.md · Phases 0–3</span><span class="tree-text">Read-only assessment: baseline, peer support, TypeScript, security, and target versions.</span></div>
+            <div class="tree-node implement"><span class="tree-title">IMPLEMENT.md · Phases 4–10</span><span class="tree-text">Execution after the green gate: fixes, upgrade, tests, review, and delivery.</span></div>
+          </div>
+          <div class="tree-connector"></div>
+          <div class="tree-support">
+            <div class="tree-node support"><span class="tree-title">migrationHistory.json</span><span class="tree-text">Checkpoint: phase, findings, blockers, and resume instructions.</span></div>
+            <div class="tree-node support"><span class="tree-title">instructions.md + references/</span><span class="tree-text">Durable playbook plus detailed breaking-change and history guidance.</span></div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- 2 -->
     <section class="slide">
-      <p class="eyebrow">Why it's built this way</p>
-      <h1 class="slide-title">Breaking changes first, not feature adoption</h1>
-      <p class="slide-sub">Three decisions shape every phase that follows.</p>
+      <p class="eyebrow">The complete migration path · Bethos standards</p>
+      <h1 class="slide-title">Eleven gated phases, from evidence to delivery</h1>
+      <p class="slide-sub">Each phase must be green before the next begins. Planning inspects; implementation changes and proves.</p>
       <div class="slide-body">
-        <div class="principle-grid">
-          <div class="principle-card">
-            <span class="principle-label">Verify live</span>
-            <span class="principle-text">Peer ranges, TypeScript floors, and vulnerability baselines shift faster than training data — every check hits the real registry or repo, never memory.</span>
-          </div>
-          <div class="principle-card">
-            <span class="principle-label">Fix what broke, not what's new</span>
-            <span class="principle-text">Actions, the compiler, Server Components are out of scope unless explicitly asked for. This is remediation, not a feature tour.</span>
-          </div>
-          <div class="principle-card">
-            <span class="principle-label">Assume interruption</span>
-            <span class="principle-text">Token limits, handoffs, a colleague on another machine — the workflow checkpoints after every phase so a stop is never a restart.</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3 -->
-    <section class="slide">
-      <p class="eyebrow">Architecture</p>
-      <h1 class="slide-title">Six files, each with one job</h1>
-      <p class="slide-sub">One entry point, two stages, a shared state file, and a driver that can run the whole thing unattended.</p>
-      <div class="slide-body">
-        <div class="arch-wrap">
-          <div class="arch-node agent">react19-migration-agent.md</div>
-          <div class="arch-connector"></div>
-          <div class="arch-node emph">SKILL.md</div>
-          <div class="arch-connector"></div>
-          <div class="arch-row">
-            <div class="arch-branch">
-              <div class="arch-node">PLAN.md</div>
-              <div class="arch-sub">Stage 1 · Phases 0–3</div>
-            </div>
-            <div class="arch-branch">
-              <div class="arch-node">IMPLEMENT.md</div>
-              <div class="arch-sub">Stage 2 · Phases 4–10</div>
+        <div class="phase-columns">
+          <div class="phase-group">
+            <h2 class="phase-group-title">Stage 1 · plan / read-only</h2>
+            <div class="phase-strip">
+              <div class="phase-card stage1"><div class="phase-num-row"><span class="phase-num">0</span><span class="phase-name">Baseline</span></div><span class="phase-desc">Choose scope, branch, and prove React 18 tests/build pass.</span></div>
+              <div class="phase-card stage1"><div class="phase-num-row"><span class="phase-num">1</span><span class="phase-name">Peer matrix</span></div><span class="phase-desc">Check every dependency against live React 19 support.</span></div>
+              <div class="phase-card stage1"><div class="phase-num-row"><span class="phase-num">2</span><span class="phase-name">TypeScript check</span></div><span class="phase-desc">Confirm the installed TypeScript can use React 19 types.</span></div>
+              <div class="phase-card stage1"><div class="phase-num-row"><span class="phase-num">3</span><span class="phase-name">Security + stability</span></div><span class="phase-desc">Record audit results and choose stable, minimal target versions.</span></div>
             </div>
           </div>
-          <div class="arch-connector"></div>
-          <div class="arch-refs">
-            <div class="arch-node" style="font-size:0.75rem;">references/breaking-changes.md</div>
-            <div class="arch-node" style="font-size:0.75rem;">references/migration-history.md</div>
+          <div class="phase-group implementation">
+            <h2 class="phase-group-title">Stage 2 · implement / verify</h2>
+            <div class="phase-strip">
+              <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">4</span><span class="phase-name">API Compatibility Fixes</span></div><span class="phase-desc">Find outdated React patterns and manually apply their React 19 replacements.</span></div>
+              <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">5</span><span class="phase-name">TypeScript fixes</span></div><span class="phase-desc">Fix refs, JSX namespace, and reducer typing changes.</span></div>
+              <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">6</span><span class="phase-name">Dependencies + React</span></div><span class="phase-desc">Upgrade flagged packages, then bump React to 19.2.8.</span></div>
+              <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">7</span><span class="phase-name">Component loop</span></div><span class="phase-desc">Run each component test; fix only what fails.</span></div>
+              <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">8</span><span class="phase-name">Logic freeze</span></div><span class="phase-desc">Review the diff and confirm changes are mechanical only.</span></div>
+              <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">9</span><span class="phase-name">Full verification</span></div><span class="phase-desc">Run tests, build, lint, manual QA, and an audit re-check.</span></div>
+              <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">10</span><span class="phase-name">Deliverable</span></div><span class="phase-desc">Finalize the playbook and migration checkpoint for handoff.</span></div>
+            </div>
           </div>
-          <div class="arch-connector"></div>
-          <div class="arch-row">
-            <div class="arch-node" style="color:var(--a18); border-color:var(--a18);">migrationHistory.json</div>
-            <div class="arch-node" style="color:var(--ink-dim);">instructions.md</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4 -->
-    <section class="slide">
-      <p class="eyebrow">Stage 1 · read-only</p>
-      <h1 class="slide-title">Planning — assessment only</h1>
-      <p class="slide-sub">Nothing here touches source code. This is the entry point for every request, including ones that just ask "is it safe to upgrade."</p>
-      <div class="slide-body">
-        <div class="phase-strip">
-          <div class="phase-card stage1">
-            <div class="phase-num-row"><span class="phase-num">0</span><span class="phase-name">Baseline</span></div>
-            <span class="phase-desc">Clean tree, dedicated branch, a true React-18 test/build baseline, and migration scope decided.</span>
-            <span class="phase-badge badge-readonly">no mutation</span>
-          </div>
-          <div class="phase-card stage1">
-            <div class="phase-num-row"><span class="phase-num">1</span><span class="phase-name">Peer-dependency matrix</span></div>
-            <span class="phase-desc">Every dependency classified ✅ / 🟡 / 🔴 / ⚪ against the live React 19 peer range.</span>
-            <span class="phase-badge badge-readonly">no mutation</span>
-          </div>
-          <div class="phase-card stage1">
-            <div class="phase-num-row"><span class="phase-num">2</span><span class="phase-name">TypeScript compatibility</span></div>
-            <span class="phase-desc">Dist-tag check finds the real @types/react floor for the installed TypeScript.</span>
-            <span class="phase-badge badge-readonly">no mutation</span>
-          </div>
-          <div class="phase-card stage1">
-            <div class="phase-num-row"><span class="phase-num">3</span><span class="phase-name">Vulnerability &amp; stability</span></div>
-            <span class="phase-desc">npm audit baseline; prefer the smallest stable version over blindly installing latest.</span>
-            <span class="phase-badge badge-readonly">no mutation</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 5 -->
-    <section class="slide">
-      <p class="eyebrow">Stage 2 · mutates code</p>
-      <h1 class="slide-title">Implementation — fix, verify, ship</h1>
-      <p class="slide-sub">Only reached once Stage 1 is fully green. Every fix here is applied by hand — no automated rewrite tool is used or depended on.</p>
-      <div class="slide-body">
-        <div class="phase-strip">
-          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">4</span><span class="phase-name">Grep sweep + manual fixes</span></div><span class="phase-desc">Find every removed API by pattern, fix each by hand against breaking-changes.md.</span><span class="phase-badge badge-mutates">mutates</span></div>
-          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">5</span><span class="phase-name">TypeScript-specific fixes</span></div><span class="phase-desc">useRef, ref-callback returns, the JSX namespace, useReducer generics — by hand, verified via tsc.</span><span class="phase-badge badge-mutates">mutates</span></div>
-          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">6</span><span class="phase-name">Upgrade + bump React</span></div><span class="phase-desc">Flagged dependencies first, then react/react-dom at the exact chosen version.</span><span class="phase-badge badge-mutates">mutates</span></div>
-          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">7</span><span class="phase-name">Per-component loop</span></div><span class="phase-desc">A component is touched only because its own test told you to — never a blanket pass.</span><span class="phase-badge badge-mutates">mutates</span></div>
-          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">8</span><span class="phase-name">Business-logic freeze</span></div><span class="phase-desc">Walk the full diff; every hunk must be mechanical, or it gets flagged, not folded in.</span><span class="phase-badge badge-mutates">reviews diff</span></div>
-          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">9</span><span class="phase-name">Full verification</span></div><span class="phase-desc">Whole test suite, production build, manual QA, and an audit re-check against baseline.</span><span class="phase-badge badge-mutates">verifies</span></div>
-          <div class="phase-card stage2"><div class="phase-num-row"><span class="phase-num">10</span><span class="phase-name">Deliverable</span></div><span class="phase-desc">instructions.md kept generic and current; migrationHistory.json finalized.</span><span class="phase-badge badge-mutates">finalizes</span></div>
         </div>
       </div>
     </section>
@@ -324,7 +324,7 @@
     </div>
     <div class="nav-btns">
       <button class="nav-btn" id="prevBtn" aria-label="Previous slide">← Prev</button>
-      <span id="counter" style="min-width:3.5em; text-align:center;">01 / 05</span>
+      <span id="counter" style="min-width:3.5em; text-align:center;">01 / 02</span>
       <button class="nav-btn" id="nextBtn" aria-label="Next slide">Next →</button>
     </div>
   </div>
