@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom'
 function ReleaseBanner() {
   return (
     <div className="alert alert-info m-0 rounded-0 text-center py-1">
-      Running the React 18.3 baseline — see SKILL.md to migrate to React 19.
+      Running the React 16.14 baseline — see SKILL.md to migrate to React 17.
     </div>
   )
 }

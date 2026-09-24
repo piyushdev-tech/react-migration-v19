@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import * as ReactDOM from 'react-dom'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -13,7 +13,12 @@ import { mountReleaseBanner } from './legacy/mountReleaseBanner'
 // createRoot tree — see src/legacy/mountReleaseBanner.tsx (migrated by SKILL.md).
 mountReleaseBanner()
 
-createRoot(document.getElementById('root')!).render(
+// React 16 baseline: `createRoot`/`react-dom/client` don't exist until React 18,
+// so the real root here uses the classic `ReactDOM.render` API — this becomes a
+// genuine (wired) removed-API fixture once a later hop reaches 18→19; see
+// `references/breaking-changes.md`'s `## React 18 → React 19` section for the
+// `createRoot`/`hydrateRoot` replacement this will need then.
+ReactDOM.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -22,4 +27,5 @@ createRoot(document.getElementById('root')!).render(
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </StrictMode>,
+  document.getElementById('root'),
 )

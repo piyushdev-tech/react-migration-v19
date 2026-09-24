@@ -1,3 +1,12 @@
+// NOT part of the `src/` build — `react-dom/client` (createRoot) doesn't exist
+// until React 18, and this repo's installed baseline is currently React 16
+// (testing the 16→17 hop). This file assumes an 18 baseline as a *prerequisite*
+// to demonstrate an 18→19 breaking change, so it can't even compile right now.
+// Move it back into `src/legacy/` once a later run lands the repo on React 18
+// (after the 17→18 hop) — see `migrationHistory.<16-to-17>...json` /
+// `references/migration-history.md`'s "Multi-hop chaining" section for how that
+// resumes. Do not delete: this is a real 18→19 fixture, just staged for later.
+
 import { createRoot } from 'react-dom/client'
 
 function Widget() {

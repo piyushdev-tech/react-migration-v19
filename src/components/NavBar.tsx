@@ -8,13 +8,16 @@ export function AppNavBar() {
     <Navbar bg="dark" data-bs-theme="dark" expand="md" className="mb-4">
       <Container>
         <Navbar.Brand as={NavLink} to="/">
-          React 18 Migration Starter
+          React 16 Migration Starter
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="main-nav" />
         <Navbar.Collapse id="main-nav">
           <Nav className="me-auto">
             <Nav.Link as={NavLink} to="/" end>
               Home
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/workspace">
+              Workspace
             </Nav.Link>
             <Nav.Link as={NavLink} to="/about">
               About
