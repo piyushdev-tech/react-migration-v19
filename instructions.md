@@ -9,9 +9,9 @@ It focuses on **breaking changes**, not new React 19 features. Adopting Actions,
 is stable on React 19.
 
 This skill is split across three files —
-[`SKILL.md`](./.claude/skills/react19-migration/SKILL.md) (entry point),
-[`PLAN.md`](./.claude/skills/react19-migration/PLAN.md) (Phases 0–3, assessment-only),
-and [`IMPLEMENT.md`](./.claude/skills/react19-migration/IMPLEMENT.md) (Phases 4–10,
+[`SKILL.md`](./.claude/skills/react-migration/SKILL.md) (entry point),
+[`PLAN.md`](./.claude/skills/react-migration/PLAN.md) (Phases 0–3, assessment-only),
+and [`IMPLEMENT.md`](./.claude/skills/react-migration/IMPLEMENT.md) (Phases 4–10,
 execution) — load `PLAN.md` first, always; only load `IMPLEMENT.md` once `PLAN.md`'s
 Phase 3 is green.
 

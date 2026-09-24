@@ -1,11 +1,108 @@
-# React 19 breaking changes — exhaustive reference
+# React major-version breaking changes — reference
 
-Loaded on demand from `SKILL.md`. This is organized by category: removed APIs, changed
-behavior, TypeScript-only changes, and ecosystem-wide gotchas that recur across many
-projects regardless of stack. Every item that has an official codemod lists the exact
-command.
+Loaded on demand from `SKILL.md`/`PLAN.md`/`IMPLEMENT.md`, always for the section
+matching **this run's `targetMajor`** — never the whole file. Organized as one top-level
+section per hop:
 
-## Removed APIs
+- **`## React 16 → React 17`** and **`## React 17 → React 18`** — these are old, stable,
+  low-churn releases that React's own official upgrade guides already document
+  thoroughly. Rather than duplicate that detail here (and risk it going stale), each
+  section is a link to the authoritative guide plus a short highlights list of the
+  changes most likely to require a source change. Treat the linked guide as the
+  authoritative source of detail; the highlights below are a starting point for Phase
+  0's fingerprint scan and Phase 4/5's grep sweep, not an exhaustive list.
+- **`## React 18 → React 19`** — this is the hop this skill originally shipped exhaustive
+  local coverage for (removed APIs, changed behavior, soft deprecations, TypeScript
+  changes, and their exact manual fixes), organized by category: removed APIs, changed
+  behavior, TypeScript-only changes, and ecosystem-wide gotchas that recur across many
+  projects regardless of stack. Every item that has an official codemod lists the exact
+  command.
+
+---
+
+## React 16 → React 17
+
+**Official guide:** https://legacy.reactjs.org/blog/2020/10/20/react-v17.html — read
+this before starting Phase 4/5 for this hop; it's the authoritative source, not the
+highlights below.
+
+React 17 was deliberately designed as a low-risk "stepping stone" release — **no new
+features**, and very little actually removed. Most of what changed is behavior, not API
+surface, so a typical app's diff for this hop is small.
+
+Highlights most likely to require a source change:
+
+- **Event delegation moves from `document` to the root DOM container** the app is
+  rendered into. Mostly transparent, but code that manually attaches listeners to
+  `document` and depends on ordering/interop with React's own delegated listeners can
+  observe a difference.
+- **Event pooling is removed.** `SyntheticEvent` objects are no longer reused/nulled
+  after the handler returns, so `event.persist()` becomes a no-op — safe to delete any
+  existing calls to it, and code that previously *needed* `persist()` to read an event
+  asynchronously no longer needs the workaround (though it also isn't harmed by leaving
+  it in place).
+- **Effect cleanup functions now run asynchronously**, matching the timing model React
+  18 later standardizes further. Tests that assumed synchronous cleanup timing can be
+  affected.
+- **`onScroll` no longer bubbles**, to avoid a common source of accidental bugs — a
+  handler relying on bubbling behavior needs to move to the element actually being
+  scrolled, or use a capture-phase/native listener instead.
+- **Errors caught by an Error Boundary are no longer double-logged to the console**
+  (logged once, not by both `console.error` and a re-throw) — the same directional
+  change React 19 completes later; if custom error-reporting code assumed the old
+  double-log, this is the first hop where that assumption needs revisiting.
+- **`react-dom`'s `unstable_createPortal`** (already deprecated pre-17) is removed —
+  replace with the stable `createPortal` export, which has been available since React
+  16 and is a drop-in rename.
+- No changes to `PropTypes`, `refs`, `Context`, or `ReactDOM.render` in this hop — those
+  removals don't happen until later hops; don't pre-emptively "fix" them here.
+
+## React 17 → React 18
+
+**Official guide:** https://react.dev/blog/2022/03/08/react-18-upgrade-guide — read
+this before starting Phase 4/5 for this hop; it's the authoritative source, not the
+highlights below.
+
+Highlights most likely to require a source change:
+
+- **New root API.** `ReactDOM.render`/`ReactDOM.hydrate` still work in React 18 but are
+  **deprecated** (console warning, not yet removed — full removal is the 18→19 hop).
+  Replace with `createRoot(container).render(el)` / `hydrateRoot(container, el)` from
+  `react-dom/client`. Doing this now, even though it isn't strictly required until the
+  next hop, is the recommended fix — it's mechanical and avoids doing the same grep
+  sweep twice.
+- **Automatic batching by default.** State updates inside promises, `setTimeout`,
+  native event handlers, and any other context outside a React event handler are now
+  batched, not just updates inside React's own event handlers. Code that relied on a
+  synchronous re-render between two such updates can behave differently; wrap the
+  specific update in `flushSync` from `react-dom` if that exact synchronous behavior is
+  actually required.
+- **`<StrictMode>` double-invokes effects** (mount → cleanup → mount again) in
+  development, on top of the double-render it already did, specifically to surface
+  effect-cleanup bugs. Expected new console noise/duplicate side effects in dev are not
+  a regression by themselves — only a real bug if a *test assertion* fails.
+- **`<Suspense>` behavior changes** — a `Suspense` boundary that's already mounted now
+  works correctly when it re-suspends (previously a common source of bugs); "Suspense
+  reveal order" for sibling boundaries also changes. Only relevant if the app already
+  uses `Suspense`.
+- **TypeScript types tightened.** `ReactChild`, `ReactFragment`, `ReactPortal`, and
+  similar aliases are deprecated in favor of `ReactNode`; a component's implicit
+  `children` prop is no longer automatically included in its type — components that
+  render `children` without declaring `children?: ReactNode` explicitly can start
+  failing to typecheck.
+- **Testing stack floor.** `@testing-library/react` needs v13+ for React 18 support;
+  `react-test-renderer`, `enzyme`, and any snapshot-based testing utility need a
+  matching major bump too, or test failures here will look like React bugs when they're
+  actually a stale testing dependency.
+- **New hooks introduced** (`useId`, `useTransition`, `useDeferredValue`,
+  `useSyncExternalStore`) — feature adoption, not required by this migration; don't
+  introduce them as part of this hop unless the user asks separately.
+
+---
+
+## React 18 → React 19
+
+### Removed APIs
 
 Codemods are published to the codemod.com registry and invoked as
 `npx codemod run <package-name> --target <path> --no-interactive` (not
@@ -43,7 +140,7 @@ what Phase 4 actually applies by hand either way.
 | `react-dom`'s `unstable_runWithPriority` | — | manual — same as above |
 | `react-is`'s deprecated element-type-checking methods | current `react-is` exports (check its own changelog for the replacement name per method) | manual — only matters if application code imports `react-is` directly, which is uncommon outside component libraries |
 
-## Changed behavior (not removed, but different)
+### Changed behavior (not removed, but different)
 
 - **`element.ref` moved into `element.props.ref`, and reading the old location now
   warns** (not just a silent behavior change). Code that reads `.ref` directly off a
@@ -99,7 +196,7 @@ what Phase 4 actually applies by hand either way.
   an active problem — but if `tsconfig.json`'s `"jsx"` is explicitly set to `"react"`
   (classic) rather than `"react-jsx"`, that needs to change.
 
-## Deprecated (not removed — still works, but don't add new usage)
+### Deprecated (not removed — still works, but don't add new usage)
 
 - **`react-test-renderer` (the whole package, not just `/shallow`) is deprecated** in
   favor of React Testing Library for web and Testing Library React Native for native.
@@ -107,7 +204,7 @@ what Phase 4 actually applies by hand either way.
   just the `/shallow` entry point specifically (see the Removed APIs table above for
   that one).
 
-## TypeScript-only changes
+### TypeScript-only changes
 
 Run first: `npx types-react-codemod@latest preset-19 ./src` — handles the bulk of
 these. Individually:
@@ -148,7 +245,7 @@ Full list of individually invokable type codemods (interactive picker):
 `react-element-default-any-props`, `refobject-defaults`, `scoped-jsx`,
 `useCallback-implicit-any`, `useRef-required-initial`.
 
-## Ecosystem-wide gotchas (recur across many projects)
+### Ecosystem-wide gotchas (recur across many projects)
 
 These aren't React-19 API changes per se, but they're the most common reason a React 19
 upgrade fails or misbehaves in practice, because they involve a third party rather than

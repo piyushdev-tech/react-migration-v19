@@ -1,4 +1,10 @@
-# react19-migration — Implementation stage (Phases 4–10)
+# react-migration — Implementation stage (Phases 4–10)
+
+**Which breaking-change list applies:** Phases 4 and 5 below are split into
+per-`targetMajor` subsections, because 16→17 and 17→18 have far less local breaking-
+change surface than 18→19. Read `migrationHistory.json`'s `findings.phase0Brief.targetMajor`
+(set in `PLAN.md` Phase 0) and use only the subsection matching it — the others exist for
+when a later hop reads this same file, not as extra work for this hop.
 
 Loaded from `SKILL.md`, after `PLAN.md`'s Phase 3 exit is green. **Don't read this file
 before that** — its steps consume Phase 1–3 outputs (the peer-dependency classification
@@ -23,16 +29,47 @@ exception** — the React version bump always applies to the whole repo regardle
 scope, and Phase 9's full-suite verification runs against the whole app, not just the
 scoped folders, since the runtime is shared either way.
 
-## Phase 4 — Grep sweep + manual fixes for removed APIs
+## Phase 4 — Grep sweep + manual fixes for this hop's breaking changes
 
-**Entry:** `PLAN.md` Phases 1–3 are documented. **Exit:** every hit below is fixed or
-consciously triaged (e.g. it's inside a third-party package, not app source), with each
-fix matching the exact replacement `references/breaking-changes.md` documents.
+**Entry:** `PLAN.md` Phases 1–3 are documented. **Exit:** every hit below (from the
+subsection matching this run's `targetMajor`) is fixed or consciously triaged (e.g. it's
+inside a third-party package, not app source), with each fix matching the exact
+replacement `references/breaking-changes.md` documents.
 
-Every removed-API fix in this workflow is applied by hand — no automated rewrite tool
-is used or depended on, so there's no third-party registry availability to worry about.
-Work on the branch from Phase 0 (still required — commit as you go so each fix is
-independently revertable):
+Every fix in this workflow is applied by hand — no automated rewrite tool is used or
+depended on, so there's no third-party registry availability to worry about. Work on the
+branch from Phase 0 (still required — commit as you go so each fix is independently
+revertable).
+
+### If `targetMajor` is 17 (16→17 hop)
+
+```bash
+grep -rn "\.persist()" <src>                                 # event pooling removed; persist() is now a no-op — safe to delete the call
+grep -rln "onScroll" <src>                                    # bubbling-dependent onScroll handlers no longer bubble
+grep -rln "unstable_createPortal" <src>                       # removed; replace with the stable createPortal export
+grep -rn "document\.addEventListener\|document\.removeEventListener" <src>  # root-level event delegation change — review interop
+```
+
+This hop is deliberately small — React 17 is an intentionally low-risk "stepping stone"
+release with no new features and very little removed. Cross-check each hit against
+`references/breaking-changes.md`'s `## React 16 → React 17` section and the official
+guide it links to before writing a fix; most hits here are behavior nuances to review,
+not hard compile/runtime failures.
+
+### If `targetMajor` is 18 (17→18 hop)
+
+```bash
+grep -rln "ReactDOM\.render\|ReactDOM\.hydrate" <src>          # still works, now deprecated — migrate to createRoot/hydrateRoot from react-dom/client
+grep -rn "flushSync" <src>                                     # re-verify call sites now that updates batch automatically by default
+```
+
+`ReactDOM.render`/`hydrate` are **deprecated, not removed,** in React 18 (they're fully
+removed only in the 18→19 hop) — moving to `createRoot`/`hydrateRoot` now is still the
+right fix, since it's required eventually and is a mechanical, Phase-8-allowed change.
+Cross-check against `references/breaking-changes.md`'s `## React 17 → React 18` section
+and the official guide it links to.
+
+### If `targetMajor` is 19 (18→19 hop)
 
 ```bash
 grep -rn "contextTypes\|getChildContext" <src>              # legacy Context API, removed
@@ -46,26 +83,42 @@ grep -rln "createFactory\|useFormState" <src>
 ```
 
 For every hit: open the file, look up the exact replacement in
-`references/breaking-changes.md`'s Removed APIs table, and apply it there — a
-`ReactDOM.render`/`hydrate` call becomes `createRoot(...).render(...)`/
-`hydrateRoot(...)`, a string ref becomes a callback ref or `useRef`, `defaultProps`
-becomes an ES6 default parameter with the *identical* default value, and so on. A hit
-inside a comment (explaining what used to be there, or referencing this playbook)
+`references/breaking-changes.md`'s `## React 18 → React 19` section's Removed APIs
+table, and apply it there — a `ReactDOM.render`/`hydrate` call becomes
+`createRoot(...).render(...)`/`hydrateRoot(...)`, a string ref becomes a callback ref or
+`useRef`, `defaultProps` becomes an ES6 default parameter with the *identical* default
+value, and so on.
+
+### For every hit, in any of the above
+
+A hit inside a comment (explaining what used to be there, or referencing this playbook)
 doesn't count — only hits in actual code matter. Every fix should be explainable purely
-as a React-19 API-shape change — see Phase 8's business-logic-freeze rule, which
-applies from this phase onward.
+as a React-`<targetMajor>` API-shape change — see Phase 8's business-logic-freeze rule,
+which applies from this phase onward.
 
 ## Phase 5 — TypeScript-specific fixes
 
-**Entry:** Phase 4 exit is green. **Exit:** the TypeScript-only changes in
-`references/breaking-changes.md` are fixed and `npx tsc -b` is clean against the
-*current* React types (before Phase 6 bumps them — this phase only fixes the parts of
-the codebase that are wrong regardless of React version, e.g. `useRef()` with no
-initial value).
+**Entry:** Phase 4 exit is green. **Exit:** the TypeScript-only changes for this hop's
+`targetMajor` are fixed and `npx tsc -b` is clean against the *current* React types
+(before Phase 6 bumps them — this phase only fixes the parts of the codebase that are
+wrong regardless of React version, e.g. `useRef()` with no initial value).
 
-Applied by hand, the same way as Phase 4 — walk
-`references/breaking-changes.md`'s TypeScript-only changes section and fix each pattern
-found:
+Applied by hand, the same way as Phase 4:
+
+### If `targetMajor` is 17
+
+No dedicated TypeScript-only changes are documented for this hop — React 17's type
+surface is close to 16's. If `npx tsc -b` is already clean after Phase 4, skip to Phase
+6.
+
+### If `targetMajor` is 18
+
+```bash
+grep -rn "ReactChild\b\|ReactFragment\b\|ReactNodeArray\b\|ReactText\b" <src>   # deprecated TS type aliases; replace with ReactNode
+grep -rln "children" <src>                                      # implicit-children component typing tightened; may need an explicit `children?: ReactNode`
+```
+
+### If `targetMajor` is 19
 
 ```bash
 grep -rn "useRef<[^>]*>()" <src>                              # useRef() now requires an argument
@@ -74,10 +127,15 @@ grep -rn "React\.Reducer<\|useReducer<React" <src>            # old single-type-
 grep -rln "declare global" <src>                              # check for bare `namespace JSX` augmentations
 ```
 
+Walk `references/breaking-changes.md`'s `## React 18 → React 19` section's TypeScript-
+only changes for the exact fix per pattern.
+
+### For every hit, in any of the above
+
 None of these greps are perfectly precise (regex over JSX/TS syntax rarely is) — treat
 hits as candidates to inspect, not a final list, and cross-check against a red
 `npx tsc -b` for anything the greps miss. Every fix here should be explainable purely as
-a React-19 API-shape change — see Phase 8.
+a React-`<targetMajor>` API-shape change — see Phase 8.
 
 ## Phase 6 — Upgrade flagged dependencies, then React itself
 
@@ -89,7 +147,7 @@ now shows ✅, TypeScript clears the Phase 2 floor if applicable, and `react`/`r
 ```bash
 # 6a — flagged third-party packages, one at a time, using the versions chosen in PLAN.md Phase 3
 npm install <pkg>@<chosen-version>
-npm test && npm run build           # still on React 18 — isolate this step's regressions
+npm test && npm run build           # still on installedMajor — isolate this step's regressions
 
 # 6b — TypeScript, only if PLAN.md Phase 2 found it below the floor
 npm install -D typescript@<chosen-version>
@@ -97,16 +155,17 @@ npx tsc -b                          # against the OLD @types/react — confirm t
 
 # 6c — React itself, exact version chosen per PLAN.md Phase 3
 npm install --save-exact react@<target> react-dom@<target>
-npm install --save-exact -D @types/react@^<major> @types/react-dom@^<major>
+npm install --save-exact -D @types/react@^<targetMajor> @types/react-dom@^<targetMajor>   # only if the project uses TypeScript
 ```
 
 Don't re-decide versions here — install what `PLAN.md` Phase 3 already chose.
 
-Fix TypeScript compile errors before moving on (see `references/breaking-changes.md` —
-`useRef` requiring an argument, ref callback implicit returns, JSX namespace scoping,
-`useReducer` type params). Do not proceed to Phase 7 with a red `tsc` build; a compile
-error here will masquerade as a component bug in the next phase. As in Phase 4, every
-fix here must be a mechanical type-level change — see Phase 8.
+Fix TypeScript compile errors before moving on — see `references/breaking-changes.md`'s
+section matching `targetMajor` (Phase 5 above already walked the ones fixable before
+this install; this step catches whatever only surfaces once the new `@types/react*` is
+actually installed). Do not proceed to Phase 7 with a red `tsc` build; a compile error
+here will masquerade as a component bug in the next phase. As in Phase 4, every fix here
+must be a mechanical type-level change — see Phase 8.
 
 ## Phase 7 — Per-component fix-and-verify loop
 
@@ -139,7 +198,7 @@ file.
      assertion fails, not just extra console noise.
    - A grid/table component losing state or throwing on mount/unmount → check whether
      the surrounding test wraps it in `act()` correctly and whether the grid library's
-     React 19 release notes mention a required prop/initialization change.
+     release notes for `targetMajor` mention a required prop/initialization change.
    - A component using `useRef()` with no generic argument, or a ref callback with an
      implicit return → TypeScript changes from Phase 6 that weren't fully resolved; fix
      at the type level, not by suppressing the error.
@@ -152,13 +211,13 @@ file.
 ## Phase 8 — Business-logic freeze: verify the diff is mechanical only
 
 **Entry:** Phases 4–7 have produced a diff. **Exit:** every hunk in that diff is
-explainable as a React-19 API-shape change, with nothing else riding along.
+explainable as a React-`<targetMajor>` API-shape change, with nothing else riding along.
 
 This gate applies retroactively to every file touched in Phases 4–7. A React version
 migration should never be the vehicle for an unrelated behavior change — even a
 "harmless-looking" one — because it makes the diff impossible to review for migration
-risk alone, and any regression becomes ambiguous (was it React 19, or the drive-by
-tweak?).
+risk alone, and any regression becomes ambiguous (was it the version bump, or the
+drive-by tweak?).
 
 ```bash
 git diff <phase-0-branch-point>..HEAD -- <src-dir>
@@ -191,15 +250,16 @@ really is required), but it must be a deliberate, visible decision, not a side e
 **Entry:** Phase 8 exit is green (diff reviewed as mechanical-only). **Exit:** the
 checklist below is fully checked.
 
-1. Check whether custom render-error monitoring depends on errors being
-   re-thrown/double-logged — React 19 changed this (see reference doc); move it to
+1. If `targetMajor` is 19: check whether custom render-error monitoring depends on
+   errors being re-thrown/double-logged — React 19 changed this (see
+   `references/breaking-changes.md`'s `## React 18 → React 19` section); move it to
    `onCaughtError`/`onUncaughtError`/`onRecoverableError` if so (this is itself a
-   mechanical, Phase-8-allowed change).
+   mechanical, Phase-8-allowed change). Not applicable to the 17 or 18 targets.
 2. `npm test` — the **whole suite**, not just the scoped folders (zero `act()`-related
    console errors). React itself changed for the entire app regardless of scope.
 3. Manual QA pass in the running app, still under `<StrictMode>`, exercising every area
    touched by a Phase 6 dependency upgrade — including areas **outside** the migration
-   scope, since they now run on React 19 too even though they weren't proactively
+   scope, since they now run on `targetMajor` too even though they weren't proactively
    fixed. If something outside scope actually breaks (build failure, runtime throw,
    failing test), that's not a minor note — it means this scoped migration isn't
    shippable as-is. Stop and put the decision to the user explicitly: expand scope to
@@ -244,8 +304,10 @@ a PR description), write that directly in your response to them — not into
 - Don't edit a component file in Phase 7 unless its own test (or a test that exercises
   it) actually failed — that phase is test-driven on purpose, not a rewrite pass.
 - Don't let a business-logic change ride along with a mechanical migration edit — every
-  changed hunk must be traceable to a React-19 API-shape change (Phase 8). If it isn't,
-  flag it instead of applying or discarding it unilaterally.
+  changed hunk must be traceable to a React-`<targetMajor>` API-shape change (Phase 8).
+  If it isn't, flag it instead of applying or discarding it unilaterally.
+- Don't apply another hop's grep patterns or fixes from Phase 4/5 — only the subsection
+  matching this run's `targetMajor` is relevant; the others are there for a future run.
 - Don't call the migration done without Phase 9's `npm audit` recheck against the
   `PLAN.md` Phase 3 baseline.
 - Don't let a scoped run imply the rest of the repo is safe — Phase 6's React bump is

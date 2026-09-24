@@ -1,7 +1,7 @@
 # Breaking-changes fixture coverage
 
 This maps every item in
-[`breaking-changes.md`](./.claude/skills/react19-migration/references/breaking-changes.md)
+[`breaking-changes.md`](./.claude/skills/react-migration/references/breaking-changes.md)
 to the fixture file(s) under `src/` that exercise it, so a full migration run can be
 checked against this list afterward: did the codemods/grep sweep/manual-fix phases
 actually catch and correctly fix every one of these?

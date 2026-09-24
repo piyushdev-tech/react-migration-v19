@@ -45,6 +45,47 @@ notes. Specifically:
   18.3.0) — treat that exactly like the `node_modules`/lockfile drift Phase 0 already
   watches for, and fix the discrepancy before continuing.
 
+## Multi-hop chaining — one major version per run
+
+This skill only ever advances a repo by **one React major version per run**
+(`installedMajor + 1`, decided in `PLAN.md` Phase 0 Step 0.1). A user asking to go
+further (e.g. React 16 all the way to 19) still only gets one hop per invocation — the
+rest happens across repeated invocations, each one reading the live `package.json`
+fresh and computing its own next hop.
+
+- **`migration.fromMajor`/`migration.toMajor`** (numbers) record *this hop's* boundary —
+  e.g. `16`/`17`. `migration.from`/`migration.to` keep recording the exact versions, as
+  before (e.g. `"16.14.0"`/`"17.0.2"`).
+- **`finalTargetMajor`** (optional number) records the user's *ultimate* destination, if
+  they stated one distant from `toMajor` (e.g. `19`, while this hop's `toMajor` is only
+  `17`). It exists purely for reporting — "2 more hops after this one" — and is carried
+  forward unchanged from hop to hop. It never changes what a single run executes; that's
+  always exactly `toMajor`.
+- **Starting a fresh hop after a prior one completed:** before treating a repo as a
+  brand-new migration, check whether `migrationHistory.json` already exists with
+  `status: "complete"`. If so, and the live installed major now matches that file's
+  `toMajor` (confirming the hop actually landed), this is the next hop in a chain, not a
+  fresh start:
+  1. Archive the completed file: rename it to
+     `migrationHistory.<fromMajor>-to-<toMajor>.json` (e.g.
+     `migrationHistory.16-to-17.json`) at the repo root, and commit it alongside the
+     hop's own changes if it isn't already committed — it's the permanent record of that
+     hop, not scratch state.
+  2. Create a fresh `migrationHistory.json` for `installedMajor → installedMajor + 1`,
+     with every phase reset to `"pending"`, `finalTargetMajor` carried forward from the
+     archived file (if it had one), and `resumeInstructions` stating which hop this is
+     in the sequence (e.g. "Hop 2 of 3: 17→18. Hop 1 (16→17) is archived in
+     migrationHistory.16-to-17.json.").
+  3. Proceed through Phase 0 normally for the new hop — don't skip Step 0.1's detection
+     just because a previous hop already ran; the installed version needs to be read
+     live again, not assumed from the archived file.
+- **Never** let a `finalTargetMajor` tempt you into executing more than one hop's worth
+  of changes in a single run, even if it would technically be possible to keep going
+  (e.g. dependencies happen to already support the version two majors out). The
+  one-hop-per-run boundary exists so each hop's diff, test run, and review stay scoped
+  to a single major's worth of breaking changes — collapsing hops defeats that purpose
+  even when it's technically achievable.
+
 ## Migration scope
 
 By default this migration touches the whole source tree (`src/`, or the project's
@@ -116,8 +157,14 @@ structured JSON and a partial edit risks producing invalid JSON.
 
 ```json
 {
-  "schemaVersion": 1,
-  "migration": { "from": "18.3.0", "to": "19.2.7" },
+  "schemaVersion": 2,
+  "migration": {
+    "from": "18.3.0",
+    "to": "19.2.7",
+    "fromMajor": 18,
+    "toMajor": 19
+  },
+  "finalTargetMajor": 19,
   "branch": "upgrade/react-19",
   "status": "in_progress",
   "createdAt": "2026-07-16T02:00:00Z",
@@ -138,6 +185,20 @@ structured JSON and a partial edit risks producing invalid JSON.
     { "id": 10, "name": "Deliverable", "stage": "implement", "status": "pending" }
   ],
   "findings": {
+    "phase0Brief": {
+      "installedMajor": 18,
+      "installedVersion": "18.3.0",
+      "targetMajor": 19,
+      "finalTargetMajor": 19,
+      "clamped": false,
+      "hopSequenceRemaining": ["18->19"],
+      "coreVersionResolution": {
+        "react": { "latestInTargetMajor": "19.2.7", "isPrerelease": false },
+        "react-dom": { "latestInTargetMajor": "19.2.7", "isPrerelease": false }
+      },
+      "breakingChangeFingerprint": { "referenceSection": "React 18 -> React 19", "totalHits": 3 },
+      "baseline": { "testsPass": true, "buildPasses": true }
+    },
     "dependencyClassification": [
       { "package": "ag-grid-react", "classification": "safe-as-is", "installedVersion": "^36.0.0", "note": "peer range already covers ^19.0.0" }
     ],
@@ -154,6 +215,15 @@ Field notes:
 
 - `status` (top-level): `"not_started"` (file just created) | `"in_progress"` |
   `"blocked"` | `"complete"`.
+- `migration.fromMajor`/`migration.toMajor`: this hop's major-version boundary — always
+  exactly one apart. Never write a file where `toMajor - fromMajor != 1`.
+- `finalTargetMajor`: the user's stated ultimate destination, if further than this hop's
+  `toMajor` — reporting-only, carried forward unchanged hop to hop. See "Multi-hop
+  chaining" above.
+- `findings.phase0Brief`: the fenced-block output of `PLAN.md` Phase 0 Step 0.4 —
+  `targetMajor`, core-package version resolution, the breaking-change fingerprint scan,
+  and the baseline result. Phase 1 and later phases read `targetMajor` from here rather
+  than re-deriving it.
 - `scope`: decided once at Phase 0 and never re-asked on resume — see "Migration
   scope" above. Remember Phase 6 (the React version bump) ignores this and always
   applies repo-wide.
@@ -178,6 +248,11 @@ Field notes:
 
 - Don't skip creating this file for a "quick" migration attempt — the entire value is
   that it exists *before* you know whether you'll need to hand it off.
+- Don't let `finalTargetMajor` justify executing more than one major's worth of changes
+  in a single run — see "Multi-hop chaining" above.
+- Don't overwrite a completed hop's `migrationHistory.json` in place when starting the
+  next hop — archive it first (rename to `migrationHistory.<fromMajor>-to-<toMajor>.json`)
+  so the completed hop's record survives.
 - Don't write prose transcripts of what happened into the JSON — keep `summary` fields
   short; put narrative detail in the PR description or commit messages instead, not in
   a file meant to be machine-read for resumption.
